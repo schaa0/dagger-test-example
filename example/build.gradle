@@ -36,7 +36,6 @@ dependencies {
     compile files('libs/dagger-fork.jar')
     annotationProcessor files('libs/guava-20.0.jar')
     annotationProcessor files('libs/dagger-producers-fork.jar')
-    //annotationProcessor 'com.google.dagger:dagger-compiler:3.0'
     annotationProcessor files('libs/dagger-compiler-fork.jar')
     testCompile 'junit:junit:4.12'
     testCompile project(':compiler')
