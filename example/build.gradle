@@ -1,0 +1,69 @@
+apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId "dagger.extension.example"
+        minSdkVersion 14
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "dagger.extension.example.runner.EspressoTestRunner"
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    //compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:multidex:1.0.1'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile files('libs/dagger-fork.jar')
+    annotationProcessor files('libs/guava-20.0.jar')
+    annotationProcessor files('libs/dagger-producers-fork.jar')
+    //annotationProcessor 'com.google.dagger:dagger-compiler:3.0'
+    annotationProcessor files('libs/dagger-compiler-fork.jar')
+    testCompile 'junit:junit:4.12'
+    testCompile project(':compiler')
+    testAnnotationProcessor project(':compiler')
+    androidTestCompile project(':test-extension')
+    androidTestAnnotationProcessor project(':compiler')
+    androidTestCompile 'com.linkedin.dexmaker:dexmaker-mockito:2.2.0'
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'javax.inject:javax.inject:1'
+}
+
+afterEvaluate {
+    android.buildTypes.all { variant ->
+        android.sourceSets.test.java.srcDirs += ("$buildDir/generated/source/apt/test/$variant.name")
+        android.sourceSets.androidTest.java.srcDirs += ("$buildDir/generated/source/apt/androidTest/$variant.name")
+    }
+}
+
+afterEvaluate {
+    android.buildTypes.all { variant ->
+        def u = "compile${variant.name.capitalize()}UnitTestJavaWithJavac"
+        def unitTestGenerateClassesTask = tasks.findByName(u)
+        def g = "assemble${variant.name.capitalize()}"
+        def generateClassesTask = tasks.findByName(g)
+        if (generateClassesTask != null && unitTestGenerateClassesTask != null)
+            generateClassesTask.dependsOn unitTestGenerateClassesTask
+    }
+}
