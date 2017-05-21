@@ -95,6 +95,8 @@ public class AppModule
     }
 }
 
+```
+
 Inject the dependencies in production code through the Injector.get() call.
 
 ```java
