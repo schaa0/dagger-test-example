@@ -38,7 +38,6 @@ dependencies {
     annotationProcessor files('libs/dagger-producers-fork.jar')
     annotationProcessor files('libs/dagger-compiler-fork.jar')
     testCompile 'junit:junit:4.12'
-    testCompile project(':compiler')
     testAnnotationProcessor project(':compiler')
     androidTestCompile project(':test-extension')
     androidTestAnnotationProcessor project(':compiler')
