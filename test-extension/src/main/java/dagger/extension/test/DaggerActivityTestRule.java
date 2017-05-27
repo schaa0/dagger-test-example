@@ -132,8 +132,14 @@ public class DaggerActivityTestRule<T extends Activity> extends UiThreadTestRule
                 {
                     f.setAccessible(true);
                     f.set(app, null);
+                }else if (name.contains("decorator")) {
+                    Object newDecoratorInstance = f.getType().getConstructors()[0].newInstance(app);
+                    f.setAccessible(true);
+                    f.set(app, newDecoratorInstance);
                 }
-            }catch(Exception e) { }
+            }catch(Exception e) {
+                e.printStackTrace();
+            }
         }
         Class<?> superclass = clazz.getSuperclass();
         if (superclass != null && !superclass.equals(Application.class)){

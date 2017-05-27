@@ -1,4 +1,10 @@
 <resources>
-    <string name="app_name">Example</string>
+    <string name="app_name">weather-sample</string>
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+    <string name="api_key">52e258b9d648c55104d57055ee214f5a</string>
+    <string name="city_format">City: %1$s</string>
+    <string name="temperature_format">Temperature: %1$s°C</string>
+    <string name="humidity_format">Humidity: %1$s%%</string>
     <string name="action_settings">Settings</string>
 </resources>
