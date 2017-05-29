@@ -4,8 +4,8 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 
 import dagger.extension.example.R;
-import dagger.extension.example.view.TodayWeatherFragment;
-import dagger.extension.example.view.TomorrowWeatherFragment;
+import dagger.extension.example.view.weather.TodayWeatherFragment;
+import dagger.extension.example.view.weather.TomorrowWeatherFragment;
 
 public class ViewPagerFragmentFactory
 {

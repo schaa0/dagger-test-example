@@ -27,6 +27,7 @@ import dagger.extension.example.service.ImageRequestManager;
 import dagger.extension.example.service.LocationProvider;
 import dagger.extension.example.service.WeatherApi;
 import dagger.extension.example.testcase.DaggerUiAutomatorTestCase;
+import dagger.extension.example.view.main.MainActivity;
 import dagger.extension.test.DaggerActivityTestRule;
 
 import static android.support.test.espresso.Espresso.onView;
@@ -58,11 +59,7 @@ public class SimpleTest extends DaggerUiAutomatorTestCase<TestWeatherApplication
     @Mock
     WeatherApi weatherApi;
     @Mock
-    ImageRequestManager imageRequestManager;
-    @Mock
     LocationProvider locationProvider;
-
-    DateProvider dateProvider = new StubDateProvider(2017, Calendar.JANUARY, 22, 23, 0, 0);
 
     private MainActivity mActivity;
 
@@ -79,9 +76,8 @@ public class SimpleTest extends DaggerUiAutomatorTestCase<TestWeatherApplication
         doReturn(Observable.empty()).when(locationProvider).onNewLocation();
 
         dependencies().decorateComponentSingleton()
-                      .withImageRequestManager(requestManager -> imageRequestManager)
-                      .withDateProvider(() -> dateProvider)
-                      .withWeatherApi(() -> weatherApi)
+                      .withDateProvider(() -> new StubDateProvider(2017, Calendar.JANUARY, 22, 23, 0, 0))
+                      .withWeatherApi(endpointUrl -> weatherApi)
                       .withLocationProvider(locationManager -> locationProvider);
     }
 
@@ -96,8 +92,6 @@ public class SimpleTest extends DaggerUiAutomatorTestCase<TestWeatherApplication
     @Test
     public void itShouldShowWeatherForNextDay() throws IOException
     {
-        WeatherCall<ThreeHoursForecastWeather> call =
-                new WeatherCall<>(ThreeHoursForecastWeather.class, Responses.THREE_HOUR_FORECAST);
 
         doReturn(Observable.empty())
                 .when(weatherApi).getCurrentWeather(anyDouble(), anyDouble(), anyString(), anyString(), anyString());
@@ -105,7 +99,7 @@ public class SimpleTest extends DaggerUiAutomatorTestCase<TestWeatherApplication
                 .when(weatherApi).getTomorrowWeather(anyDouble(), anyDouble(), anyString(), anyInt(), anyString(), anyString());
 
         when(weatherApi.getForecastWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq("de"), anyString())).thenReturn(
-                Observable.just(call.execute().body())
+                Observable.just(jsonToPojo(ThreeHoursForecastWeather.class, Responses.THREE_HOUR_FORECAST))
         );
 
         mActivity = rule.launchActivity(null);
@@ -129,13 +123,10 @@ public class SimpleTest extends DaggerUiAutomatorTestCase<TestWeatherApplication
                         "2017-01-23 18:00:00: -9.35°C\n" +
                         "2017-01-23 21:00:00: -10.29°C\n";
 
-        ViewInteraction textView = onView(withId(android.R.id.message));
+        ViewInteraction textView = onView(withId(R.id.textView));
         textView.check(matches(withText(threeHourForecastDataAsString)));
 
-        ViewInteraction button = onView(withId(android.R.id.button1));
-        button.check(matches(isDisplayed()));
-
-        ViewInteraction textView2 = onView(withId(R.id.alertTitle));
+        ViewInteraction textView2 = onView(withId(R.id.textView6));
         textView2.check(matches(withText("Three Hour Forecast")));
 
     }
@@ -143,11 +134,16 @@ public class SimpleTest extends DaggerUiAutomatorTestCase<TestWeatherApplication
     @Test
     public void itShouldDisplayTemperatureFromApi() throws IOException
     {
-        doReturn(Observable.just(jsonToPojo(TomorrowWeather.class, Responses.TOMORROW_WEATHER)))
-                .when(weatherApi).getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(1), eq("de"), anyString());
 
-        doReturn(Observable.just(jsonToPojo(TodayWeather.class, Responses.TODAY_WEATHER)))
-                .when(weatherApi).getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq("de"), anyString());
+        doReturn(
+                Observable.just(jsonToPojo(TomorrowWeather.class, Responses.TOMORROW_WEATHER))
+        ).when(weatherApi)
+            .getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(1), eq("de"), anyString());
+
+        doReturn(
+                Observable.just(jsonToPojo(TodayWeather.class, Responses.TODAY_WEATHER))
+        ).when(weatherApi)
+            .getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq("de"), anyString());
 
         mActivity = rule.launchActivity(null);
         allowPermissionsIfNeeded();

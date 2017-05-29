@@ -1,22 +1,17 @@
 package dagger.extension.example.di;
 
-import android.app.Activity;
-
-import java.util.Map;
-
 import javax.inject.Inject;
-import javax.inject.Named;
 
-import dagger.extension.example.view.ForecastActivity;
-import dagger.extension.example.view.MainActivity;
-import injector.Injector;
+import dagger.di.ActivityComponentBuilder;
+import dagger.di.ComponentBuilder;
+import dagger.extension.example.view.forecast.ForecastActivity;
+import dagger.extension.example.view.main.MainActivity;
 
 public class WeatherApplication extends DaggerApplication {
 
     ComponentSingleton singletonComponent;
 
-    @Inject ComponentActivity.Builder componentActivityBuilder;
-    @Inject ComponentForecastPresenter.Builder componentForecastBuilder;
+    @Inject ComponentBuilder<ActivityComponentBuilder> componentBuilder;
 
     @Override
     public void onCreate() {
@@ -25,11 +20,15 @@ public class WeatherApplication extends DaggerApplication {
         singletonComponent.inject(this);
     }
 
-    public void inject(MainActivity activity) {
-        getInjector().componentActivity(componentActivityBuilder, activity).inject(activity);
+    public ComponentMainActivity inject(MainActivity activity) {
+        return componentBuilder.getComponent(ComponentMainActivity.Builder.class, activity, builder -> {
+            return getInjector().componentMainActivity(builder, activity);
+        });
     }
 
-    public void inject(ForecastActivity forecastActivity, String forecastWeather) {
-        getInjector().componentForecastPresenter(componentForecastBuilder, forecastWeather).inject(forecastActivity);
+    public ComponentForecastActivity inject(ForecastActivity activity, String forecastWeather) {
+        return componentBuilder.getComponent(ComponentForecastActivity.Builder.class, activity, builder -> {
+            return getInjector().componentForecastActivity(builder, activity, forecastWeather);
+        });
     }
 }

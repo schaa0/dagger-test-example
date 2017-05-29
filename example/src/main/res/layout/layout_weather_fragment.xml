@@ -3,10 +3,10 @@
         <import type="android.view.View"/>
         <variable
             name="vm"
-            type="dagger.extension.example.vm.WeatherViewModel"/>
+            type="dagger.extension.example.view.weather.WeatherViewModel"/>
         <variable
             name="fm"
-            type="dagger.extension.example.view.WeatherFragment"/>
+            type="dagger.extension.example.view.weather.WeatherFragment"/>
     </data>
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                     xmlns:app="http://schemas.android.com/apk/res-auto"

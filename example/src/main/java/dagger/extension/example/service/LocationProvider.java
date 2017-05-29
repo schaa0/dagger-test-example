@@ -6,14 +6,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import dagger.AllowStubGeneration;
-import dagger.extension.example.event.PermissionEvent;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 

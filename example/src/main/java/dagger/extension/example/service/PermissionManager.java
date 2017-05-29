@@ -6,20 +6,14 @@ import android.support.v7.app.AppCompatActivity;
 
 import javax.inject.Inject;
 
-import dagger.extension.example.di.ActivityScope;
-import dagger.extension.example.event.PermissionEvent;
-import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.annotations.NonNull;
+import dagger.extension.example.di.qualifier.ActivityScope;
 import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
 
 @ActivityScope
 public class PermissionManager {
 
     private final AppCompatActivity activity;
-    private final PublishSubject<PermissionEvent> container = PublishSubject.create();
+    private final PublishSubject<PermissionResult> container = PublishSubject.create();
 
     @Inject
     public PermissionManager(AppCompatActivity activity) {
@@ -34,11 +28,11 @@ public class PermissionManager {
         ActivityCompat.requestPermissions(activity, new String[]{permission}, requestCode);
     }
 
-    public PublishSubject<PermissionEvent> onPermissionGranted() {
+    public PublishSubject<PermissionResult> onPermissionGranted() {
         return this.container;
     }
 
-    public void dispatchEvent(PermissionEvent permissionEvent) {
+    public void dispatchEvent(PermissionResult permissionEvent) {
         this.container.onNext(permissionEvent);
     }
 

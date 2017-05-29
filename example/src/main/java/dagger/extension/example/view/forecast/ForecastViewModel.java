@@ -1,0 +1,21 @@
+package dagger.extension.example.view.forecast;
+
+import android.databinding.ObservableField;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import dagger.extension.example.service.NavigationController;
+import dagger.extension.example.view.main.NavigationViewModel;
+
+public class ForecastViewModel extends NavigationViewModel {
+
+    public final ObservableField<String> forecastWeatherData;
+
+    @Inject
+    public ForecastViewModel(NavigationController navigation, @Named("forecastWeatherData") String forecastWeatherData){
+        super(navigation);
+        this.forecastWeatherData = new ObservableField<>(forecastWeatherData);
+    }
+
+}

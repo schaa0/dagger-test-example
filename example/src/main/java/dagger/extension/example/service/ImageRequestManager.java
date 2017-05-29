@@ -19,10 +19,6 @@ import io.reactivex.annotations.NonNull;
 
 public class ImageRequestManager {
 
-    public interface IconCallback {
-        void onIconLoaded(Bitmap bitmap);
-    }
-
     private RequestManager requestManager;
 
     @AllowStubGeneration

@@ -47,10 +47,10 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    /*compile files('libs/dagger-fork.jar')
-        annotationProcessor files('libs/guava-20.0.jar')
-        annotationProcessor files('libs/dagger-producers-fork.jar')
-        annotationProcessor files('libs/dagger-compiler-fork.jar')*/
+    compile files('libs/dagger-fork.jar')
+    annotationProcessor files('libs/guava-20.0.jar')
+    annotationProcessor files('libs/dagger-producers-fork.jar')
+    annotationProcessor files('libs/dagger-compiler-fork.jar')
     compile 'io.reactivex.rxjava2:rxjava:2.1.0'
     compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
     compile 'com.squareup.retrofit2:adapter-rxjava2:2.3.0'
@@ -78,6 +78,8 @@ dependencies {
     compile 'com.google.code.gson:gson:2.7'
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.jakewharton:butterknife:8.5.1'
+    provided 'com.google.auto.factory:auto-factory:1.0-beta5'
+    annotationProcessor 'com.google.auto.factory:auto-factory:1.0-beta5'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
 }
 
