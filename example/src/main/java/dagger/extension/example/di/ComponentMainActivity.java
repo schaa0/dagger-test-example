@@ -9,7 +9,7 @@ import dagger.Provides;
 import dagger.Subcomponent;
 import dagger.di.ActivityComponent;
 import dagger.di.ActivityComponentBuilder;
-import dagger.extension.example.di.qualifier.ActivityScope;
+import dagger.extension.example.scope.ActivityScope;
 import dagger.extension.example.service.ViewPagerFragmentFactory;
 import dagger.extension.example.view.main.MainActivity;
 

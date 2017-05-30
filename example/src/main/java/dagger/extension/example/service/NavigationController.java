@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import javax.inject.Inject;
 
-import dagger.extension.example.di.qualifier.ActivityScope;
+import dagger.extension.example.scope.ActivityScope;
 import dagger.extension.example.di.ComponentErrorDialogFragment;
 import dagger.extension.example.view.error.ErrorDialogFragment;
 import dagger.extension.example.view.forecast.ForecastActivity;

@@ -10,6 +10,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Qualifier
 @Documented
 @Retention(RUNTIME)
-public @interface ErrorDialog {
+public @interface ForecastWeather {
     String value() default "";
 }

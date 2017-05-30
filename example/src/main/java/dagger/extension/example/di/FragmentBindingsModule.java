@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.inject.Provider;
 
+import dagger.AllowStubGeneration;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -33,6 +34,7 @@ public abstract class FragmentBindingsModule {
     public abstract FragmentComponentBuilder tomorrowWeather(ComponentTomorrowFragment.Builder impl);
 
     @Provides
+    @AllowStubGeneration
     public static ComponentBuilder<FragmentComponentBuilder> componentBuilder(Map<Class<?>, Provider<FragmentComponentBuilder>> builderMap) {
         return new ComponentBuilder<>(builderMap);
     }
