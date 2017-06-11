@@ -39,6 +39,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withParent;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static dagger.extension.example.service.WeatherService.LANG;
 import static dagger.extension.example.stubs.Responses.jsonToPojo;
 import static org.hamcrest.Matchers.allOf;
 import static org.junit.Assert.assertEquals;
@@ -103,7 +104,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         doReturn(Observable.empty())
                 .when(weatherApi).getTomorrowWeather(anyDouble(), anyDouble(), anyString(), anyInt(), anyString(), anyString());
 
-        when(weatherApi.getForecastWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq("de"), anyString())).thenReturn(
+        when(weatherApi.getForecastWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(LANG), anyString())).thenReturn(
                 Observable.just(jsonToPojo(ThreeHoursForecastWeather.class, Responses.THREE_HOUR_FORECAST))
         );
 
@@ -143,18 +144,18 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         doReturn(
                 Observable.just(jsonToPojo(TomorrowWeather.class, Responses.TOMORROW_WEATHER))
         ).when(weatherApi)
-            .getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(1), eq("de"), anyString());
+            .getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(1), eq(LANG), anyString());
 
         doReturn(
                 Observable.just(jsonToPojo(TodayWeather.class, Responses.TODAY_WEATHER))
         ).when(weatherApi)
-            .getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq("de"), anyString());
+            .getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(LANG), anyString());
 
         mActivity = rule.launchActivity(null);
         allowPermissionsIfNeeded();
 
-        onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText("3.76")));
-        onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText("7.85")));
+        onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText("Temperature: 3.76°C")));
+        onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText("Temperature: 7.85°C")));
     }
 
     @Test

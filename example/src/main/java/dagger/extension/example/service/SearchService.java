@@ -11,6 +11,8 @@ import io.reactivex.Single;
 @Singleton
 public class SearchService {
 
+    private static final String LANGUAGE = "en";
+
     private final WeatherApi api;
     private final Scheduler scheduler;
     private final String apiKey;
@@ -26,7 +28,7 @@ public class SearchService {
 
     public Single<SearchModel> searchByCity(String city) {
         lastCity = city;
-        return api.searchWeather(city, "metric", "de", apiKey)
+        return api.searchWeather(city, "metric", LANGUAGE, apiKey)
                 .subscribeOn(this.scheduler);
     }
 

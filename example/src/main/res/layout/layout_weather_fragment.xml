@@ -1,5 +1,6 @@
 <layout>
     <data>
+        <import type="java.lang.String"/>
         <import type="android.view.View"/>
         <variable
             name="vm"
@@ -70,7 +71,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="@{vm.temperature}"
+                        android:text="@{String.format(@string/temperature_format, vm.temperature)}"
                         android:padding="8dp"
                         android:textSize="24sp"/>
 
@@ -80,7 +81,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:padding="8dp"
-                        android:text="@{vm.humidity}"
+                        android:text="@{String.format(@string/humidity_format, vm.humidity)}"
                         android:textSize="24sp"/>
 
                 </LinearLayout>

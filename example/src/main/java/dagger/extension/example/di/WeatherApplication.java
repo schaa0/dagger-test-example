@@ -18,16 +18,11 @@ public class WeatherApplication extends DaggerHookApplication implements HasActi
     @Override
     public void onCreate() {
         super.onCreate();
-        AndroidInjector applicationInjector = this.applicationInjector();
-        applicationInjector.inject(this);
+        DaggerComponentSingleton.builder(this).create(this).inject(this);
     }
 
     public DispatchingAndroidInjector<Activity> activityInjector() {
         return this.activityInjector;
-    }
-
-    protected AndroidInjector<? extends WeatherApplication> applicationInjector() {
-        return DaggerComponentSingleton.builder(this).create(this);
     }
 
 
