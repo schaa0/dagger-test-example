@@ -5,9 +5,10 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
-import dagger.extension.example.scope.ActivityScope;
-import dagger.extension.example.di.ComponentErrorDialogFragment;
+import dagger.extension.example.di.scope.ActivityScope;
+import dagger.extension.example.view.error.ComponentErrorDialogFragment;
 import dagger.extension.example.view.error.ErrorDialogFragment;
 import dagger.extension.example.view.forecast.ForecastActivity;
 
@@ -29,8 +30,9 @@ public class NavigationController {
         String tag = String.format("%s::%s", title, message);
         if (fm.findFragmentByTag(tag) == null)
         {
-            ErrorDialogFragment dialog = ErrorDialogFragment.newInstance(title, message);
-            dialog.show(fm, tag);
+            errorBuilder.title(title).message(message)
+                        .build()
+                        .errorDialog().show(fm, tag);
             fm.executePendingTransactions();
         }
     }

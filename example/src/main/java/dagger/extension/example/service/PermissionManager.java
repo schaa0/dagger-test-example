@@ -6,7 +6,8 @@ import android.support.v7.app.AppCompatActivity;
 
 import javax.inject.Inject;
 
-import dagger.extension.example.scope.ActivityScope;
+import dagger.AllowStubGeneration;
+import dagger.extension.example.di.scope.ActivityScope;
 import io.reactivex.subjects.PublishSubject;
 
 @ActivityScope
@@ -16,6 +17,7 @@ public class PermissionManager {
     private final PublishSubject<PermissionResult> container = PublishSubject.create();
 
     @Inject
+    @AllowStubGeneration
     public PermissionManager(AppCompatActivity activity) {
         this.activity = activity;
     }

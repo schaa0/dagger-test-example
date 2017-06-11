@@ -28,9 +28,9 @@ public class TomorrowWeatherViewModel extends WeatherViewModel {
     protected void loadWeather(double longitude, double latitude)
     {
             dispatchRequestStarted();
-            weatherService.getTomorrowWeather(longitude, latitude, FORECAST_DAYS)
+            disposables.add(weatherService.getTomorrowWeather(longitude, latitude, FORECAST_DAYS)
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(this::handleWeatherResult, this::showError);
+                    .subscribe(this::handleWeatherResult, this::showError));
     }
 
     private void handleWeatherResult(Weather weather) {

@@ -29,6 +29,7 @@ import dagger.extension.example.service.filter.TodayWeatherResponseFilter;
 import dagger.extension.example.stubs.Responses;
 import dagger.extension.example.view.weather.TodayWeatherViewModel;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.subjects.PublishSubject;
 
 import static org.junit.Assert.assertEquals;

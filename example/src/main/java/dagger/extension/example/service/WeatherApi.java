@@ -2,8 +2,10 @@ package dagger.extension.example.service;
 
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
+import dagger.extension.example.model.search.SearchModel;
 import dagger.extension.example.model.today.TodayWeather;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
@@ -24,4 +26,10 @@ public interface WeatherApi
     @GET("/data/2.5/forecast")
     Observable<ThreeHoursForecastWeather> getForecastWeather(@Query("lon") double longitude, @Query
             ("lat") double latitude, @Query("units") String metric, @Query("lang") String lang, @Query("appid") String apiKey);
+
+    @GET("/data/2.5/forecast")
+    Single<SearchModel> searchWeather(@Query("q") String city,
+                                          @Query("units") String metric,
+                                          @Query("lang") String lang,
+                                          @Query("appid") String apiKey);
 }

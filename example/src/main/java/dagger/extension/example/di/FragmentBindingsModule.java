@@ -1,41 +1,44 @@
 package dagger.extension.example.di;
 
-import java.util.Map;
+import android.support.v4.app.Fragment;
 
-import javax.inject.Provider;
-
-import dagger.AllowStubGeneration;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import dagger.di.ComponentBuilder;
-import dagger.di.FragmentComponentBuilder;
+import dagger.android.AndroidInjector;
+import dagger.android.ContributesAndroidInjector;
+import dagger.android.support.FragmentKey;
+import dagger.extension.example.di.scope.FragmentScope;
+import dagger.extension.example.view.error.ComponentErrorDialogFragment;
 import dagger.extension.example.view.error.ErrorDialogFragment;
+import dagger.extension.example.view.search.SearchAdapter;
+import dagger.extension.example.view.search.SearchAdapterFactory;
+import dagger.extension.example.view.search.SearchFragment;
 import dagger.extension.example.view.weather.TodayWeatherFragment;
 import dagger.extension.example.view.weather.TomorrowWeatherFragment;
-import dagger.multibindings.ClassKey;
 import dagger.multibindings.IntoMap;
 
-@Module(subcomponents = {ComponentErrorDialogFragment.class, ComponentTodayFragment.class, ComponentTomorrowFragment.class})
+@Module(subcomponents = {ComponentErrorDialogFragment.class})
 public abstract class FragmentBindingsModule {
-    @Binds
-    @IntoMap
-    @ClassKey(ErrorDialogFragment.class)
-    public abstract FragmentComponentBuilder errorDialog(ComponentErrorDialogFragment.Builder impl);
 
-    @Binds
-    @IntoMap
-    @ClassKey(TodayWeatherFragment.class)
-    public abstract FragmentComponentBuilder todayWeather(ComponentTodayFragment.Builder impl);
+    @FragmentScope
+    @ContributesAndroidInjector
+    public abstract TodayWeatherFragment todayWeatherFragment();
 
-    @Binds
-    @IntoMap
-    @ClassKey(TomorrowWeatherFragment.class)
-    public abstract FragmentComponentBuilder tomorrowWeather(ComponentTomorrowFragment.Builder impl);
+    @FragmentScope
+    @ContributesAndroidInjector
+    public abstract TomorrowWeatherFragment tomorrowWeatherFragment();
 
-    @Provides
-    @AllowStubGeneration
-    public static ComponentBuilder<FragmentComponentBuilder> componentBuilder(Map<Class<?>, Provider<FragmentComponentBuilder>> builderMap) {
-        return new ComponentBuilder<>(builderMap);
+    @FragmentScope
+    @ContributesAndroidInjector(modules = {SearchModule.class})
+    public abstract SearchFragment searchFragment();
+
+    @Module
+    abstract static class SearchModule {
+        @Provides
+        public static SearchAdapterFactory searchAdapterFactory() {
+            return SearchAdapter::new;
+        }
     }
+
 }

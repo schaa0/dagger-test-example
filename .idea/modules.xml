@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/compiler/compiler.iml" filepath="$PROJECT_DIR$/compiler/compiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/dagger-test-extension.iml" filepath="$PROJECT_DIR$/dagger-test-extension.iml" />
       <module fileurl="file://$PROJECT_DIR$/example/example.iml" filepath="$PROJECT_DIR$/example/example.iml" />
-      <module fileurl="file://$PROJECT_DIR$/test-extension/test-extension.iml" filepath="$PROJECT_DIR$/test-extension/test-extension.iml" />
     </modules>
   </component>
 </project>

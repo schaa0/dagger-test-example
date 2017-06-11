@@ -3,33 +3,27 @@ package dagger.extension.example.view.main;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import dagger.di.ComponentBuilder;
-import dagger.di.FragmentComponentBuilder;
+import dagger.android.AndroidInjection;
+import dagger.android.support.DaggerAppCompatActivity;
 import dagger.extension.example.R;
-import dagger.extension.example.di.ComponentErrorDialogFragment;
-import dagger.extension.example.di.ComponentTodayFragment;
-import dagger.extension.example.di.ComponentTomorrowFragment;
 import dagger.extension.example.di.WeatherApplication;
 import dagger.extension.example.service.PermissionResult;
 import dagger.extension.example.service.PermissionManager;
-import dagger.extension.example.service.ViewPagerFragmentFactory;
-import dagger.extension.example.view.weather.TodayWeatherFragment;
-import dagger.extension.example.view.weather.TomorrowWeatherFragment;
-import dagger.extension.example.view.error.ErrorDialogFragment;
-import injector.Injector;
+import io.reactivex.Observable;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends DaggerAppCompatActivity
 {
 
     @BindView(R.id.container) ViewPager mViewPager;
@@ -39,12 +33,12 @@ public class MainActivity extends AppCompatActivity
     @Inject SectionsPagerAdapter mSectionsPagerAdapter;
     @Inject PermissionManager permissionManager;
 
-    @Inject ComponentBuilder<FragmentComponentBuilder> componentBuilder;
+    @Inject MainViewModel mainViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-        app().inject(this);
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
@@ -57,8 +51,33 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    protected WeatherApplication app() {
-        return (WeatherApplication) getApplication();
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        MenuItem searchMenuItem = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) searchMenuItem.getActionView();
+        Observable.<String>create(observableEmitter -> {
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    searchView.clearFocus();
+                    getWindow().getDecorView().requestFocus();
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (newText.length() > 2)
+                    {
+                        mViewPager.setCurrentItem(2, true);
+                        observableEmitter.onNext(newText);
+                    }
+                    return false;
+                }
+            });
+        }).debounce(1000, TimeUnit.MILLISECONDS)
+          .subscribe(city -> mainViewModel.onSearchQuery(city));
+        return true;
     }
 
     @Override
@@ -69,54 +88,5 @@ public class MainActivity extends AppCompatActivity
         {
             permissionManager.dispatchEvent(new PermissionResult(requestCode, permissions, grantResults));
         }
-    }
-
-    public ComponentErrorDialogFragment inject(ErrorDialogFragment errorDialogFragment, String message, String title) {
-        return componentBuilder.getComponent(ComponentErrorDialogFragment.Builder.class, errorDialogFragment, builder -> {
-            return Injector.get(app()).componentErrorDialogFragment(builder, message, title);
-        });
-    }
-
-    public static class SectionsPagerAdapter extends FragmentPagerAdapter
-    {
-
-        private ViewPagerFragmentFactory viewPagerFragmentFactory;
-
-        @Inject
-        public SectionsPagerAdapter(FragmentManager fm, ViewPagerFragmentFactory viewPagerFragmentFactory)
-        {
-            super(fm);
-            this.viewPagerFragmentFactory = viewPagerFragmentFactory;
-        }
-
-        @Override
-        public Fragment getItem(int position)
-        {
-            return viewPagerFragmentFactory.getItem(position);
-        }
-
-        @Override
-        public int getCount()
-        {
-            return viewPagerFragmentFactory.getCount();
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position)
-        {
-            return viewPagerFragmentFactory.getPageTitle(position);
-        }
-    }
-
-    public ComponentTodayFragment inject(TodayWeatherFragment fragment) {
-        return componentBuilder.getComponent(ComponentTodayFragment.Builder.class, fragment, builder -> {
-            return Injector.get(getApplication()).componentTodayFragment(builder);
-        });
-    }
-
-    public ComponentTomorrowFragment inject(TomorrowWeatherFragment fragment) {
-        return componentBuilder.getComponent(ComponentTomorrowFragment.Builder.class, fragment, builder -> {
-            return Injector.get(getApplication()).componentTomorrowFragment(builder);
-        });
     }
 }

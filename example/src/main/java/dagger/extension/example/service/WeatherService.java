@@ -14,6 +14,7 @@ import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
 import dagger.extension.example.model.today.TodayWeather;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
+import io.reactivex.Single;
 
 @Singleton
 public class WeatherService
@@ -25,7 +26,8 @@ public class WeatherService
     private String apiKey;
 
     @Inject
-    public WeatherService(WeatherApi api, Scheduler scheduler, ImageRequestManager imageRequestManager, @Named("apiKey") String apiKey){
+    public WeatherService(WeatherApi api, Scheduler scheduler,
+                          ImageRequestManager imageRequestManager, @Named("apiKey") String apiKey){
         this.api = api;
         this.scheduler = scheduler;
         this.imageRequestManager = imageRequestManager;
@@ -34,25 +36,29 @@ public class WeatherService
 
 
     public Observable<Bitmap> loadIcon(String icon) {
-        return imageRequestManager.load(icon);
+        return imageRequestManager.load(icon)
+                                  .take(1);
     }
 
     public Observable<TomorrowWeather> getTomorrowWeather(double longitude, double latitude, int forecastDays)
     {
         return api.getTomorrowWeather(longitude, latitude, "metric", forecastDays, "de", apiKey)
-                .subscribeOn(scheduler);
+                .subscribeOn(scheduler)
+                .take(1);
     }
 
     public Observable<ThreeHoursForecastWeather> getForecastWeather(double longitude, double latitude)
     {
         return api.getForecastWeather(longitude, latitude, "metric", "de", apiKey)
-                  .subscribeOn(scheduler);
+                  .subscribeOn(scheduler)
+                  .take(1);
     }
 
     public Observable<TodayWeather> getCurrentWeather(double longitude, double latitude)
     {
         return api.getCurrentWeather(longitude, latitude, "metric", "de", apiKey)
-                  .subscribeOn(scheduler);
+                  .subscribeOn(scheduler)
+                  .take(1);
     }
 
 }

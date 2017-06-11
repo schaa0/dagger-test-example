@@ -2,7 +2,7 @@ package dagger.extension.example.service.filter;
 import java.text.ParseException;
 import java.util.Calendar;
 
-import dagger.extension.example.model.forecast.threehours.List;
+import dagger.extension.example.model.forecast.threehours.WeatherInfo;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.service.DateProvider;
 
@@ -23,7 +23,7 @@ public abstract class WeatherResponseFilter
         StringBuilder sb = new StringBuilder();
         boolean foundAnEntryPreviously = false;
         Calendar currentDate = getCurrentDate();
-        for (List entry : body.getList())
+        for (WeatherInfo entry : body.getWeatherInfo())
         {
             boolean result = parse(sb, currentDate, entry);
             if (foundAnEntryPreviouslyButNotThisTime(foundAnEntryPreviously, result))
@@ -46,15 +46,15 @@ public abstract class WeatherResponseFilter
 
     protected abstract boolean isCorrectDay(Calendar currentDate, Calendar parsedDate);
 
-    private boolean parse(StringBuilder sb, Calendar currentDate, List list) throws ParseException
+    private boolean parse(StringBuilder sb, Calendar currentDate, WeatherInfo weatherInfo) throws ParseException
     {
-        String strDate = list.getDtTxt();
+        String strDate = weatherInfo.getDtTxt();
         Calendar parsedDate = dateProvider.parse(strDate);
         if (isCorrectDay(currentDate, parsedDate) && parsedDateDoesNotRepresentThePast(currentDate, parsedDate))
         {
             sb.append(strDate)
               .append(": ")
-              .append(list.getMain().getTemp())
+              .append(weatherInfo.getMain().getTemp())
               .append("°C")
               .append("\n");
             return true;

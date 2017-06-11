@@ -15,6 +15,8 @@ import dagger.AllowStubGeneration;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
 import io.reactivex.annotations.NonNull;
 
 public class ImageRequestManager {
@@ -31,13 +33,13 @@ public class ImageRequestManager {
         return Observable.create(e -> getInto(iconUrl, e));
     }
 
-    private SimpleTarget<Bitmap> getInto(String iconUrl, final ObservableEmitter<Bitmap> observableEmitter) {
+    private SimpleTarget<Bitmap> getInto(String iconUrl, final ObservableEmitter<Bitmap> e) {
         return requestManager.load(Uri.parse(iconUrl)).asBitmap().into(new SimpleTarget<Bitmap>()
         {
             @Override
             public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation)
             {
-                observableEmitter.onNext(resource);
+                e.onNext(resource);
             }
         });
     }

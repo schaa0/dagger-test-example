@@ -21,7 +21,7 @@ public class LocationProvider implements LocationListener
     public static final int MIN_DISTANCE_IN_METERS = 1000;
 
     private LocationManager locationManager;
-    private final PublishSubject<Location> container = PublishSubject.create();
+    private final PublishSubject<Location> locationPublishSubject = PublishSubject.create();
 
     private boolean isActive = false;
 
@@ -78,7 +78,7 @@ public class LocationProvider implements LocationListener
     @Override
     public void onLocationChanged(Location location)
     {
-        container.onNext(location);
+        locationPublishSubject.onNext(location);
     }
 
     @Override
@@ -100,14 +100,14 @@ public class LocationProvider implements LocationListener
     }
 
     public void disposeIfNotObserved() {
-        if (!container.hasObservers())
+        if (!locationPublishSubject.hasObservers())
         {
             this.removeUpdates();
         }
     }
 
     public Observable<Location> onNewLocation() {
-        return container;
+        return locationPublishSubject;
     }
 
 

@@ -11,22 +11,16 @@ import android.view.ViewGroup;
 import java.util.Map;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
-
-import dagger.di.FragmentComponentBuilder;
+import dagger.android.support.DaggerFragment;
 import dagger.extension.example.R;
 import dagger.extension.example.databinding.LayoutWeatherFragmentBinding;
-import dagger.extension.example.view.weather.WeatherViewModel;
 import dagger.extension.example.service.PermissionManager;
 
-public abstract class WeatherFragment extends Fragment
+public abstract class WeatherFragment extends DaggerFragment
 {
 
     @Inject PermissionManager permissionManager;
     private LayoutWeatherFragmentBinding binding;
-
-    @Inject
-    Map<Class<?>, Provider<FragmentComponentBuilder>> fragmentComponentBuilders;
 
     @Nullable
     @Override

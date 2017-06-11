@@ -1,34 +1,34 @@
 package dagger.extension.example.di;
 
+import android.app.Activity;
+import android.app.Application;
+import android.app.Fragment;
+import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.ContentProvider;
 import javax.inject.Inject;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasActivityInjector;
 
-import dagger.di.ActivityComponentBuilder;
-import dagger.di.ComponentBuilder;
-import dagger.extension.example.view.forecast.ForecastActivity;
-import dagger.extension.example.view.main.MainActivity;
+public class WeatherApplication extends DaggerHookApplication implements HasActivityInjector{
 
-public class WeatherApplication extends DaggerApplication {
-
-    ComponentSingleton singletonComponent;
-
-    @Inject ComponentBuilder<ActivityComponentBuilder> componentBuilder;
+    @Inject DispatchingAndroidInjector<Activity> activityInjector;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        singletonComponent = getInjector().componentSingleton(this);
-        singletonComponent.inject(this);
+        AndroidInjector applicationInjector = this.applicationInjector();
+        applicationInjector.inject(this);
     }
 
-    public ComponentMainActivity inject(MainActivity activity) {
-        return componentBuilder.getComponent(ComponentMainActivity.Builder.class, activity, builder -> {
-            return getInjector().componentMainActivity(builder, activity);
-        });
+    public DispatchingAndroidInjector<Activity> activityInjector() {
+        return this.activityInjector;
     }
 
-    public ComponentForecastActivity inject(ForecastActivity activity, String forecastWeather) {
-        return componentBuilder.getComponent(ComponentForecastActivity.Builder.class, activity, builder -> {
-            return getInjector().componentForecastActivity(builder, activity, forecastWeather);
-        });
+    protected AndroidInjector<? extends WeatherApplication> applicationInjector() {
+        return DaggerComponentSingleton.builder(this).create(this);
     }
+
+
 }

@@ -22,14 +22,14 @@ public class TodayWeatherViewModel extends WeatherViewModel {
     @Override
     protected void loadWeather(double longitude, double latitude) {
         dispatchRequestStarted();
-        weatherService.getCurrentWeather(longitude, latitude)
+        disposables.add(weatherService.getCurrentWeather(longitude, latitude)
                       .observeOn(AndroidSchedulers.mainThread())
                       .subscribe(weather ->
                       {
                           updateState(weather);
                           dispatchRequestFinished();
                           disposables.add(weatherService.loadIcon(weather.icon()).subscribe(icon::set));
-                      }, this::showError);
+                      }, this::showError));
     }
 
     private void showError(Throwable t) {

@@ -1,1 +1,1 @@
-include ':compiler', ':test-extension', ':example'
+include ':example'

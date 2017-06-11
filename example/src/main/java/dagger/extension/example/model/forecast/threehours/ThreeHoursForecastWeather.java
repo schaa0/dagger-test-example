@@ -24,7 +24,7 @@ public class ThreeHoursForecastWeather implements Parcelable
     private int cnt;
     @SerializedName("list")
     @Expose
-    private java.util.List<List> list = null;
+    private java.util.List<WeatherInfo> weatherInfo = null;
     public final static Creator<ThreeHoursForecastWeather> CREATOR = new Creator<ThreeHoursForecastWeather>() {
 
 
@@ -37,7 +37,7 @@ public class ThreeHoursForecastWeather implements Parcelable
             instance.message = ((double) in.readValue((double.class.getClassLoader())));
             instance.city = ((City) in.readValue((City.class.getClassLoader())));
             instance.cnt = ((int) in.readValue((int.class.getClassLoader())));
-            in.readList(instance.list, (List.class.getClassLoader()));
+            in.readList(instance.weatherInfo, (WeatherInfo.class.getClassLoader()));
             return instance;
         }
 
@@ -60,16 +60,16 @@ public class ThreeHoursForecastWeather implements Parcelable
      * @param message
      * @param cnt
      * @param cod
-     * @param list
+     * @param weatherInfo
      * @param city
      */
-    public ThreeHoursForecastWeather(String cod, double message, City city, int cnt, java.util.List<List> list) {
+    public ThreeHoursForecastWeather(String cod, double message, City city, int cnt, java.util.List<WeatherInfo> weatherInfo) {
         super();
         this.cod = cod;
         this.message = message;
         this.city = city;
         this.cnt = cnt;
-        this.list = list;
+        this.weatherInfo = weatherInfo;
     }
 
     public String getCod() {
@@ -104,12 +104,12 @@ public class ThreeHoursForecastWeather implements Parcelable
         this.cnt = cnt;
     }
 
-    public java.util.List<List> getList() {
-        return list;
+    public java.util.List<WeatherInfo> getWeatherInfo() {
+        return weatherInfo;
     }
 
-    public void setList(java.util.List<List> list) {
-        this.list = list;
+    public void setWeatherInfo(java.util.List<WeatherInfo> weatherInfo) {
+        this.weatherInfo = weatherInfo;
     }
 
     public void writeToParcel(Parcel dest, int flags) {
@@ -117,7 +117,7 @@ public class ThreeHoursForecastWeather implements Parcelable
         dest.writeValue(message);
         dest.writeValue(city);
         dest.writeValue(cnt);
-        dest.writeList(list);
+        dest.writeList(weatherInfo);
     }
 
     public int describeContents() {
