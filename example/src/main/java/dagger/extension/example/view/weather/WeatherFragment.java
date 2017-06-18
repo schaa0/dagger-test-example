@@ -8,19 +8,32 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.Map;
-
 import javax.inject.Inject;
-import dagger.android.support.DaggerFragment;
+
+import dagger.android.support.AndroidSupportInjection;
 import dagger.extension.example.R;
 import dagger.extension.example.databinding.LayoutWeatherFragmentBinding;
-import dagger.extension.example.service.PermissionManager;
+import dagger.extension.example.service.PermissionService;
 
-public abstract class WeatherFragment extends DaggerFragment
+public abstract class WeatherFragment extends Fragment
 {
 
-    @Inject PermissionManager permissionManager;
+    private static final String VIEW_MODEL_STATE = "ViewModelState";
+
+    @Inject
+    PermissionService permissionService;
+
+    WeatherViewModel.WeatherViewModelState state;
     private LayoutWeatherFragmentBinding binding;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        state = savedInstanceState != null ?
+                savedInstanceState.getParcelable(VIEW_MODEL_STATE) :
+                new WeatherViewModel.WeatherViewModelState();
+        AndroidSupportInjection.inject(this);
+    }
 
     @Nullable
     @Override
@@ -39,14 +52,19 @@ public abstract class WeatherFragment extends DaggerFragment
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(VIEW_MODEL_STATE, this.viewModel().saveState());
+    }
+
+    @Override
     public void onDestroy() {
         viewModel().onViewDetached();
         super.onDestroy();
     }
 
-    public void onWeatherIconClicked(View v) {
+    public void onWeatherIconClicked(View v) { }
 
-    }
     protected abstract WeatherViewModel viewModel();
 
 }

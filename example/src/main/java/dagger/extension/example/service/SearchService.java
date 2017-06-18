@@ -15,21 +15,18 @@ public class SearchService {
 
     private final WeatherApi api;
     private final Scheduler scheduler;
-    private final String apiKey;
 
     private String lastCity = "";
 
     @Inject
-    public SearchService(WeatherApi api, Scheduler scheduler, @Named("apiKey") String apiKey) {
+    public SearchService(WeatherApi api, Scheduler scheduler) {
         this.api = api;
         this.scheduler = scheduler;
-        this.apiKey = apiKey;
     }
 
     public Single<SearchModel> searchByCity(String city) {
         lastCity = city;
-        return api.searchWeather(city, "metric", LANGUAGE, apiKey)
-                .subscribeOn(this.scheduler);
+        return api.searchWeather(city).subscribeOn(this.scheduler);
     }
 
     public String getLastSearch() {

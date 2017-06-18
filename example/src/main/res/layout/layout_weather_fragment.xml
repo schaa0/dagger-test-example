@@ -54,7 +54,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:padding="8dp"
-                        android:text="@{vm.city}"
+                        android:text="@{vm.weather.city}"
                         android:textSize="28sp"/>
 
                     <TextView
@@ -63,7 +63,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:padding="8dp"
-                        android:text="@{vm.description}"
+                        android:text="@{vm.weather.description}"
                         android:textSize="20sp"/>
 
                     <TextView
@@ -71,7 +71,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="@{String.format(@string/temperature_format, vm.temperature)}"
+                        android:text="@{String.format(@string/temperature_format, vm.weather.temperature)}"
                         android:padding="8dp"
                         android:textSize="24sp"/>
 
@@ -81,7 +81,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:padding="8dp"
-                        android:text="@{String.format(@string/humidity_format, vm.humidity)}"
+                        android:text="@{String.format(@string/humidity_format, vm.weather.humidity)}"
                         android:textSize="24sp"/>
 
                 </LinearLayout>

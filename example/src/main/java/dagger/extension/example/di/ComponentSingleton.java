@@ -15,15 +15,14 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.AllowStubGeneration;
-import dagger.Binds;
-import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.android.AndroidInjector;
 import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.extension.example.R;
-import dagger.extension.example.service.WeatherApi;
+import dagger.extension.example.di.qualifier.ApiParam;
+import dagger.extension.example.service.RetrofitWeatherApi;
 import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.OkHttpClient;
@@ -56,30 +55,32 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
         }
 
         @Provides
-        @Singleton
         public static SharedPreferences sharedPreferences(Context context) {
             return PreferenceManager.getDefaultSharedPreferences(context);
         }
 
-        @Provides
-        @Named("apiKey")
-        @Singleton
-        @AllowStubGeneration
+        @Provides @ApiParam("key") @AllowStubGeneration
         public static String apiKey(Context context) {
             return context.getString(R.string.api_key);
         }
 
-        @Provides
-        @Named("endpointUrl")
-        @Singleton
-        @AllowStubGeneration
+        @Provides @ApiParam("lang") @AllowStubGeneration
+        public static String lang() {
+            return "en";
+        }
+
+        @Provides @ApiParam("units") @AllowStubGeneration
+        public static String units() {
+            return "metric";
+        }
+
+        @Provides @Named("endpointUrl") @AllowStubGeneration
         public static String endpointUrl(Context context) {
             return context.getString(R.string.weather_endpoint_url);
         }
 
-        @Provides
-        @AllowStubGeneration
-        public static WeatherApi weatherAPI(@Named("endpointUrl") String url) {
+        @Provides @AllowStubGeneration
+        public static RetrofitWeatherApi weatherAPI(@Named("endpointUrl") String url) {
             return new Retrofit.Builder()
                     .addConverterFactory(GsonConverterFactory.create())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
@@ -89,12 +90,10 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
                             .readTimeout(5, TimeUnit.SECONDS)
                             .build())
                     .build()
-                    .create(WeatherApi.class);
+                    .create(RetrofitWeatherApi.class);
         }
 
-        @Provides
-        @AllowStubGeneration
-        @Singleton
+        @Provides @Singleton @AllowStubGeneration
         public static RequestManager glide(Context context) {
             return Glide.with(context);
         }

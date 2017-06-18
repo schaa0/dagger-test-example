@@ -22,11 +22,14 @@ public class ErrorDialogFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
         ErrorBinding binding = DataBindingUtil.inflate(LayoutInflater.from(getActivity()), R.layout.error, null, false);
         binding.setVm(vm);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(binding.getRoot());
         builder.setPositiveButton("OK", null);
+
         return builder.create();
     }
 }

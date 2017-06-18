@@ -54,12 +54,12 @@ public class LocationProvider implements LocationListener
         Criteria criteria = new Criteria();
         criteria.setCostAllowed(false);
         criteria.setAccuracy(Criteria.ACCURACY_LOW);
-        return locationManager.getBestProvider(criteria, false);
+        return this.locationManager.getBestProvider(criteria, false);
     }
 
     public void requestLocationUpdates()
     {
-        if (isActive) {
+        if (this.isActive || !this.locationManager.isProviderEnabled(getBestProvider())) {
             return;
         }
         isActive = true;
@@ -90,7 +90,12 @@ public class LocationProvider implements LocationListener
     @Override
     public void onProviderEnabled(String provider)
     {
-        onLocationChanged(lastLocation());
+        this.requestLocationUpdates();
+        Location current = this.lastLocation();
+        if (current != null)
+        {
+            onLocationChanged(current);
+        }
     }
 
     @Override

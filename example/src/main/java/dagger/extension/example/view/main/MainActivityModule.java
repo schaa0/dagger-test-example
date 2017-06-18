@@ -14,9 +14,6 @@ import dagger.extension.example.view.main.MainActivity;
 import dagger.multibindings.IntKey;
 import dagger.multibindings.IntoMap;
 
-/**
- * Created by Andy on 10.06.2017.
- */
 @Module(includes = {ActivityModule.class, FragmentBindingsModule.class})
 public abstract class MainActivityModule {
 

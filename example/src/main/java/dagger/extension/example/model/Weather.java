@@ -1,6 +1,9 @@
 package dagger.extension.example.model;
 
-public interface Weather {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public interface Weather extends Parcelable {
     String temperature();
     String humidity();
     String icon();

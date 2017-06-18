@@ -36,10 +36,11 @@ public class SearchFragment extends DaggerFragment {
         super.onActivityCreated(savedInstanceState);
         binding.setVm(searchViewModel);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
-        compositeDisposable.add(searchViewModel.onNewAdapterAvailable().subscribe(searchAdapter ->
-        {
-            binding.recyclerView.setAdapter(searchAdapter);
-        }));
+        compositeDisposable.add(
+            searchViewModel.onNewAdapterAvailable().subscribe(searchAdapter -> {
+                binding.recyclerView.setAdapter(searchAdapter);
+            })
+        );
         searchViewModel.onAttached();
     }
 

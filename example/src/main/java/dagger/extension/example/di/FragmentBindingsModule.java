@@ -1,37 +1,31 @@
 package dagger.extension.example.di;
 
-import android.support.v4.app.Fragment;
-
-import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import dagger.android.AndroidInjector;
 import dagger.android.ContributesAndroidInjector;
-import dagger.android.support.FragmentKey;
 import dagger.extension.example.di.scope.FragmentScope;
 import dagger.extension.example.view.error.ComponentErrorDialogFragment;
-import dagger.extension.example.view.error.ErrorDialogFragment;
 import dagger.extension.example.view.search.SearchAdapter;
 import dagger.extension.example.view.search.SearchAdapterFactory;
 import dagger.extension.example.view.search.SearchFragment;
 import dagger.extension.example.view.weather.TodayWeatherFragment;
 import dagger.extension.example.view.weather.TomorrowWeatherFragment;
-import dagger.multibindings.IntoMap;
+import dagger.extension.example.view.weather.WeatherModule;
 
 @Module(subcomponents = {ComponentErrorDialogFragment.class})
 public abstract class FragmentBindingsModule {
 
+    @Module abstract static class TodayWeatherModule extends WeatherModule<TodayWeatherFragment> { }
+
     @FragmentScope
-    @ContributesAndroidInjector
+    @ContributesAndroidInjector(modules = {TodayWeatherModule.class})
     public abstract TodayWeatherFragment todayWeatherFragment();
 
-    @FragmentScope
-    @ContributesAndroidInjector
-    public abstract TomorrowWeatherFragment tomorrowWeatherFragment();
+    @Module abstract static class TomorrowWeatherModule extends WeatherModule<TomorrowWeatherFragment> { }
 
     @FragmentScope
-    @ContributesAndroidInjector(modules = {SearchModule.class})
-    public abstract SearchFragment searchFragment();
+    @ContributesAndroidInjector(modules = {TomorrowWeatherModule.class})
+    public abstract TomorrowWeatherFragment tomorrowWeatherFragment();
 
     @Module
     abstract static class SearchModule {
@@ -40,5 +34,9 @@ public abstract class FragmentBindingsModule {
             return SearchAdapter::new;
         }
     }
+
+    @FragmentScope
+    @ContributesAndroidInjector(modules = {SearchModule.class})
+    public abstract SearchFragment searchFragment();
 
 }

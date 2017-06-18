@@ -6,29 +6,27 @@ import javax.inject.Inject;
 import dagger.extension.example.model.Weather;
 import dagger.extension.example.service.LocationProvider;
 import dagger.extension.example.service.NavigationController;
-import dagger.extension.example.service.PermissionManager;
+import dagger.extension.example.service.PermissionService;
 import dagger.extension.example.service.WeatherService;
 import dagger.extension.example.service.filter.TomorrowWeatherResponseFilter;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
 public class TomorrowWeatherViewModel extends WeatherViewModel {
 
-    private static final int FORECAST_DAYS = 1;
-
     @Inject
     public TomorrowWeatherViewModel(NavigationController navigation,
-                                    PermissionManager permissionManager,
+                                    PermissionService permissionService,
                                     LocationProvider locationProvider,
                                     WeatherService weatherService,
                                     TomorrowWeatherResponseFilter weatherParser) {
-        super(navigation, permissionManager, locationProvider, weatherService, weatherParser);
+        super(navigation, permissionService, locationProvider, weatherService, weatherParser);
     }
 
     @Override
     protected void loadWeather(double longitude, double latitude)
     {
             dispatchRequestStarted();
-            disposables.add(weatherService.getTomorrowWeather(longitude, latitude, FORECAST_DAYS)
+            disposables.add(weatherService.getTomorrowWeather(longitude, latitude)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(this::handleWeatherResult, this::showError));
     }

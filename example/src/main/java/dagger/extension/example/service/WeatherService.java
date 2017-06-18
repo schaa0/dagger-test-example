@@ -6,6 +6,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import dagger.extension.example.model.Weather;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
 import dagger.extension.example.model.today.TodayWeather;
@@ -16,19 +17,15 @@ import io.reactivex.Scheduler;
 public class WeatherService
 {
 
-    public static final String LANG = "en";
     private final WeatherApi api;
     private final Scheduler scheduler;
     private final ImageRequestManager imageRequestManager;
-    private String apiKey;
 
     @Inject
-    public WeatherService(WeatherApi api, Scheduler scheduler,
-                          ImageRequestManager imageRequestManager, @Named("apiKey") String apiKey){
+    public WeatherService(WeatherApi api, Scheduler scheduler, ImageRequestManager imageRequestManager){
         this.api = api;
         this.scheduler = scheduler;
         this.imageRequestManager = imageRequestManager;
-        this.apiKey = apiKey;
     }
 
 
@@ -37,23 +34,23 @@ public class WeatherService
                                   .take(1);
     }
 
-    public Observable<TomorrowWeather> getTomorrowWeather(double longitude, double latitude, int forecastDays)
+    public Observable<TomorrowWeather> getTomorrowWeather(double longitude, double latitude)
     {
-        return api.getTomorrowWeather(longitude, latitude, "metric", forecastDays, LANG, apiKey)
+        return api.getTomorrowWeather(longitude, latitude)
                 .subscribeOn(scheduler)
                 .take(1);
     }
 
     public Observable<ThreeHoursForecastWeather> getForecastWeather(double longitude, double latitude)
     {
-        return api.getForecastWeather(longitude, latitude, "metric", LANG, apiKey)
+        return api.getForecastWeather(longitude, latitude)
                   .subscribeOn(scheduler)
                   .take(1);
     }
 
     public Observable<TodayWeather> getCurrentWeather(double longitude, double latitude)
     {
-        return api.getCurrentWeather(longitude, latitude, "metric", LANG, apiKey)
+        return api.getCurrentWeather(longitude, latitude)
                   .subscribeOn(scheduler)
                   .take(1);
     }

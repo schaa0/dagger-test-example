@@ -18,6 +18,8 @@ import dagger.extension.example.view.weather.TomorrowWeatherFragment;
 public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
     private static final int PAGE_COUNT = 3;
+    public static final int POSITION_SEARCH = 2;
+
     private final Map<Integer, String> pageTitles;
 
     @Inject

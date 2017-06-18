@@ -6,7 +6,7 @@ import javax.inject.Inject;
 
 import dagger.extension.example.service.LocationProvider;
 import dagger.extension.example.service.NavigationController;
-import dagger.extension.example.service.PermissionManager;
+import dagger.extension.example.service.PermissionService;
 import dagger.extension.example.service.WeatherService;
 import dagger.extension.example.service.filter.TodayWeatherResponseFilter;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -14,9 +14,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 public class TodayWeatherViewModel extends WeatherViewModel {
 
     @Inject
-    public TodayWeatherViewModel(NavigationController navigation, PermissionManager permissionManager, LocationProvider
+    public TodayWeatherViewModel(NavigationController navigation, PermissionService permissionService, LocationProvider
             locationProvider, WeatherService weatherService, TodayWeatherResponseFilter weatherParser) {
-        super(navigation, permissionManager, locationProvider, weatherService, weatherParser);
+        super(navigation, permissionService, locationProvider, weatherService, weatherParser);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class TodayWeatherViewModel extends WeatherViewModel {
                           {
                               dispatchRequestFinished();
                               navigateToForecastActivity(forecastData);
-                          }, throwable -> dispatchRequestFinished());
+                          }, this::showError);
         }
     }
 

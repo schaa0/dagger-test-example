@@ -1,6 +1,7 @@
 package dagger.extension.example.view;
 
 import android.location.Location;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.support.test.espresso.ViewInteraction;
 import android.support.test.runner.AndroidJUnit4;
@@ -26,12 +27,11 @@ import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
 import dagger.extension.example.model.today.TodayWeather;
 import dagger.extension.example.service.LocationProvider;
 import dagger.extension.example.service.WeatherApi;
-import dagger.extension.example.stubs.PermissionManagerStub;
+import dagger.extension.example.stubs.PermissionServiceStub;
 import dagger.extension.example.testcase.UiAutomatorEspressoTestCase;
 import dagger.extension.example.view.main.MainActivity;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static android.support.test.espresso.action.ViewActions.replaceText;
 import static android.support.test.espresso.action.ViewActions.swipeLeft;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
@@ -39,16 +39,12 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withParent;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static dagger.extension.example.service.WeatherService.LANG;
-import static dagger.extension.example.stubs.Responses.jsonToPojo;
+import static dagger.extension.example.stubs.Fakes.fakeResponse;
 import static org.hamcrest.Matchers.allOf;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import dagger.extension.example.stubs.*;
 import dagger.extension.example.view.search.SearchViewModel;
@@ -61,10 +57,8 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public static final double FAKE_LONGITUDE = 1.0;
     public static final double FAKE_LATITUDE = 1.0;
 
-    @Mock
-    WeatherApi weatherApi;
-    @Mock
-    LocationProvider locationProvider;
+    @Mock WeatherApi weatherApi;
+    @Mock LocationProvider locationProvider;
 
     private MainActivity mActivity;
 
@@ -75,37 +69,28 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public void setUp() throws Exception
     {
         super.setUp();
-
         MockitoAnnotations.initMocks(this);
-        doReturn(this.fakeLocation()).when(locationProvider).lastLocation();
-        doReturn(Observable.empty()).when(locationProvider).onNewLocation();
 
         decorate().componentSingleton()
-                  .withDateProvider(() -> new StubDateProvider(2017, Calendar.JANUARY, 22, 23, 0, 0))
-                  .withWeatherApi(endpointUrl -> weatherApi)
-                  .withLocationProvider(locationManager -> locationProvider);
+                  .withDateProvider(() -> new DateProviderStub(2017, Calendar.JANUARY, 22, 23, 0, 0))
+                  .withWeatherApi(() -> weatherApi)
+                  .withLocationProvider(() -> locationProvider);
 
-    }
+        Location fakeLocation = Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE);
+        doReturn(fakeLocation).when(locationProvider).lastLocation();
+        doReturn(Observable.empty()).when(locationProvider).onNewLocation();
 
-    private Location fakeLocation()
-    {
-        Location location = new Location("");
-        location.setLongitude(FAKE_LONGITUDE);
-        location.setLatitude(FAKE_LATITUDE);
-        return location;
     }
 
     @Test
     public void itShouldShowWeatherForNextDay() throws IOException
     {
 
-        doReturn(Observable.empty())
-                .when(weatherApi).getCurrentWeather(anyDouble(), anyDouble(), anyString(), anyString(), anyString());
-        doReturn(Observable.empty())
-                .when(weatherApi).getTomorrowWeather(anyDouble(), anyDouble(), anyString(), anyInt(), anyString(), anyString());
+        doReturn(Observable.empty()).when(weatherApi).getCurrentWeather(anyDouble(), anyDouble());
+        doReturn(Observable.empty()).when(weatherApi).getTomorrowWeather(anyDouble(), anyDouble());
 
-        when(weatherApi.getForecastWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(LANG), anyString())).thenReturn(
-                Observable.just(jsonToPojo(ThreeHoursForecastWeather.class, Responses.THREE_HOUR_FORECAST))
+        when(weatherApi.getForecastWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE))).thenReturn(
+                Observable.just(fakeResponse(ThreeHoursForecastWeather.class, Responses.JSON.THREE_HOUR_FORECAST))
         );
 
         mActivity = rule.launchActivity(null);
@@ -119,7 +104,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
                 allOf(withId(R.id.imageView), isDisplayed()));
         appCompatImageView.perform(click());
 
-        String threeHourForecastDataAsString =
+        final String threeHourForecastDataResult =
                 "2017-01-23 00:00:00: -11.55°C\n" +
                         "2017-01-23 03:00:00: -12.0°C\n" +
                         "2017-01-23 06:00:00: -12.15°C\n" +
@@ -130,7 +115,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
                         "2017-01-23 21:00:00: -10.29°C\n";
 
         ViewInteraction textView = onView(withId(R.id.textView));
-        textView.check(matches(withText(threeHourForecastDataAsString)));
+        textView.check(matches(withText(threeHourForecastDataResult)));
 
         ViewInteraction textView2 = onView(withId(R.id.textView6));
         textView2.check(matches(withText("Three Hour Forecast")));
@@ -141,15 +126,11 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public void itShouldDisplayTemperatureFromApi() throws IOException
     {
 
-        doReturn(
-                Observable.just(jsonToPojo(TomorrowWeather.class, Responses.TOMORROW_WEATHER))
-        ).when(weatherApi)
-            .getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(1), eq(LANG), anyString());
+        doReturn(Observable.just(fakeResponse(TomorrowWeather.class, Responses.JSON.TOMORROW_WEATHER)))
+                .when(weatherApi).getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
 
-        doReturn(
-                Observable.just(jsonToPojo(TodayWeather.class, Responses.TODAY_WEATHER))
-        ).when(weatherApi)
-            .getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE), eq("metric"), eq(LANG), anyString());
+        doReturn(Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER)))
+                .when(weatherApi).getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
 
         mActivity = rule.launchActivity(null);
         allowPermissionsIfNeeded();
@@ -159,9 +140,40 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     }
 
     @Test
+    public void weatherDataIsRestoredOnOrientationChange() throws IOException, RemoteException {
+        doReturn(
+                Observable.just(fakeResponse(TomorrowWeather.class, Responses.JSON.TOMORROW_WEATHER))
+        ).when(weatherApi).getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
+
+        doReturn(
+                Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER))
+        ).when(weatherApi).getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
+
+        mActivity = rule.launchActivity(null);
+        allowPermissionsIfNeeded();
+
+        String todayTemperature = "Temperature: 3.76°C";
+        String tomorrowTemperature = "Temperature: 7.85°C";
+
+        onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText(todayTemperature)));
+        onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
+
+        device().setOrientationLeft();
+
+        onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText(todayTemperature)));
+        onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
+
+        device().setOrientationNatural();
+
+        onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText(todayTemperature)));
+        onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
+
+    }
+
+    @Test
     public void testSearchIsInvokedWhenSubmittingInSearchView() {
         CountDownLatch latch = new CountDownLatch(1);
-        decorate().mainActivitySubcomponent().withPermissionManager(PermissionManagerStub::new)
+        decorate().mainActivitySubcomponent().withPermissionService(PermissionServiceStub::new)
                   .and().searchFragmentSubcomponent()
                     .withSearchViewModel((navigationController, mainViewModel, searchService, searchAdapterFactory) -> {
                        return new SearchViewModel(navigationController, mainViewModel, searchService, searchAdapterFactory){
@@ -192,9 +204,9 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
                         withParent(allOf(withId(R.id.search_plate),
                                 withParent(withId(R.id.search_edit_frame)))),
                         isDisplayed()));
-        searchAutoComplete.perform(replaceText("AAA"), closeSoftKeyboard());
+        searchAutoComplete.perform(replaceText("AAA"));
 
-        SystemClock.sleep(1000);
+        SystemClock.sleep(1500);
 
         assertEquals(0, latch.getCount());
     }
