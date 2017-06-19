@@ -8,9 +8,9 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.extension.example.di.FragmentBindingsModule;
 import dagger.extension.example.di.qualifier.ForecastWeather;
-import dagger.extension.example.view.forecast.ForecastActivity;
+import dagger.extension.example.view.error.ComponentErrorDialogFragment;
 
-@Module(includes = FragmentBindingsModule.class)
+@Module(subcomponents = {ComponentErrorDialogFragment.class})
 public abstract class ForecastActivityModule {
 
     @Binds

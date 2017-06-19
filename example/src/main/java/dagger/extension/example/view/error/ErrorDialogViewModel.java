@@ -4,7 +4,6 @@ import android.databinding.BaseObservable;
 import android.databinding.ObservableField;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import dagger.extension.example.di.qualifier.ErrorDialog;
 

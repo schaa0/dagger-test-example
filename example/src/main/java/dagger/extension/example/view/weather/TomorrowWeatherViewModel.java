@@ -1,25 +1,29 @@
 package dagger.extension.example.view.weather;
 
 import android.location.Location;
+
 import javax.inject.Inject;
 
+import dagger.extension.example.di.qualifier.RxObservable;
 import dagger.extension.example.model.Weather;
-import dagger.extension.example.service.LocationProvider;
+import dagger.extension.example.service.LocationService;
 import dagger.extension.example.service.NavigationController;
 import dagger.extension.example.service.PermissionService;
 import dagger.extension.example.service.WeatherService;
 import dagger.extension.example.service.filter.TomorrowWeatherResponseFilter;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
 public class TomorrowWeatherViewModel extends WeatherViewModel {
 
     @Inject
     public TomorrowWeatherViewModel(NavigationController navigation,
+                                    @RxObservable("page") Observable<Integer> pageChangeObservable,
                                     PermissionService permissionService,
-                                    LocationProvider locationProvider,
+                                    LocationService locationService,
                                     WeatherService weatherService,
                                     TomorrowWeatherResponseFilter weatherParser) {
-        super(navigation, permissionService, locationProvider, weatherService, weatherParser);
+        super(navigation, pageChangeObservable, permissionService, locationService, weatherService, weatherParser);
     }
 
     @Override
@@ -28,7 +32,15 @@ public class TomorrowWeatherViewModel extends WeatherViewModel {
             dispatchRequestStarted();
             disposables.add(weatherService.getTomorrowWeather(longitude, latitude)
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(this::handleWeatherResult, this::showError));
+                    .subscribe(this::handleWeatherResult, t -> {
+                        this.showError(t);
+                        this.clearView();
+                    }));
+    }
+
+    @Override
+    protected boolean isOwnPosition(int position) {
+        return position == 1;
     }
 
     private void handleWeatherResult(Weather weather) {
@@ -39,7 +51,7 @@ public class TomorrowWeatherViewModel extends WeatherViewModel {
 
     public void loadForecastWeatherDataForTomorrow()
     {
-        Location lastKnownLocation = locationProvider.lastLocation();
+        Location lastKnownLocation = locationService.lastLocation();
         if (lastKnownLocation != null)
         {
             double longitude = lastKnownLocation.getLongitude();
@@ -50,10 +62,6 @@ public class TomorrowWeatherViewModel extends WeatherViewModel {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(this::handleForecastDataResult, this::showError);
         }
-    }
-
-    private void showError(Throwable t) {
-        this.showError("", t.getMessage());
     }
 
     private void handleForecastDataResult(String forecastData) {

@@ -3,7 +3,6 @@ package dagger.extension.example.view.forecast;
 import android.databinding.ObservableField;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import dagger.extension.example.di.qualifier.ForecastWeather;
 import dagger.extension.example.service.NavigationController;

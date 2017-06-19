@@ -1,9 +1,10 @@
 package dagger.extension.example.service.filter;
+
 import java.text.ParseException;
 import java.util.Calendar;
 
-import dagger.extension.example.model.forecast.threehours.WeatherInfo;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
+import dagger.extension.example.model.forecast.threehours.WeatherInfo;
 import dagger.extension.example.service.DateProvider;
 
 public abstract class WeatherResponseFilter

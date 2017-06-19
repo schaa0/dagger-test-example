@@ -8,18 +8,22 @@ import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.io.IOException;
+
 import javax.inject.Inject;
 
 import dagger.extension.example.model.EmptyWeather;
-import dagger.extension.example.service.PermissionResult;
 import dagger.extension.example.model.Weather;
-import dagger.extension.example.service.LocationProvider;
+import dagger.extension.example.service.LocationService;
 import dagger.extension.example.service.NavigationController;
+import dagger.extension.example.service.PermissionResult;
 import dagger.extension.example.service.PermissionService;
 import dagger.extension.example.service.WeatherService;
 import dagger.extension.example.service.filter.WeatherResponseFilter;
 import dagger.extension.example.view.main.NavigationViewModel;
+import io.reactivex.Observable;
 import io.reactivex.internal.disposables.ListCompositeDisposable;
+import retrofit2.HttpException;
 
 public abstract class WeatherViewModel extends NavigationViewModel
 {
@@ -28,9 +32,10 @@ public abstract class WeatherViewModel extends NavigationViewModel
     public static final int REQUEST_CODE_PERM_ACCESS_COARSE_LOCATION = 23;
 
     protected final PermissionService permissionService;
-    protected final LocationProvider locationProvider;
+    protected final LocationService locationService;
     protected final WeatherService weatherService;
     protected final WeatherResponseFilter weatherParser;
+    protected final Observable<Integer> pageChangeObservable;
 
     public final ObservableField<Weather> weather = new ObservableField<>();
 
@@ -43,11 +48,14 @@ public abstract class WeatherViewModel extends NavigationViewModel
 
     @Inject WeatherViewModelState state;
 
-    public WeatherViewModel(NavigationController navigation, PermissionService permissionService, LocationProvider locationProvider, WeatherService weatherService, WeatherResponseFilter weatherParser)
+    public WeatherViewModel(NavigationController navigation, Observable<Integer> pageChangeObservable,
+                            PermissionService permissionService, LocationService locationService,
+                            WeatherService weatherService, WeatherResponseFilter weatherParser)
     {
         super(navigation);
+        this.pageChangeObservable = pageChangeObservable;
         this.permissionService = permissionService;
-        this.locationProvider = locationProvider;
+        this.locationService = locationService;
         this.weatherService = weatherService;
         this.weatherParser = weatherParser;
     }
@@ -57,22 +65,33 @@ public abstract class WeatherViewModel extends NavigationViewModel
     public void onViewAttached()
     {
         disposables.add(permissionService.onPermissionGranted().subscribe(this::onPermissionsResult));
-        disposables.add(locationProvider.onNewLocation().subscribe(this::onLocationChanged));
+        disposables.add(locationService.onNewLocation().subscribe(this::onLocationChanged));
+        disposables.add(pageChangeObservable
+                                     .filter(this::isOwnPosition)
+                                     .subscribe(this::refreshIfNecessary));
         if (this.isStatePresent()) {
             this.restoreState();
         }else {
             requestPermissionsIfNeeded();
             if (hasAllPermissions())
             {
-                locationProvider.requestLocationUpdates();
+                locationService.requestLocationUpdates();
                 loadWeatherIfAllPermissionsGranted();
             }
         }
     }
 
-    private void restoreState() {
+    protected abstract boolean isOwnPosition(int position);
+
+    protected void restoreState() {
         this.weather.set(this.state.weather);
         this.icon.set(this.state.icon);
+    }
+
+    private void refreshIfNecessary(int position) {
+        if (this.weather.get() == null || this.weather.get() instanceof EmptyWeather) {
+            this.loadWeatherIfAllPermissionsGranted();
+        }
     }
 
     private boolean isStatePresent() {
@@ -87,15 +106,15 @@ public abstract class WeatherViewModel extends NavigationViewModel
     {
         disposables.dispose();
         disposables.clear();
-        locationProvider.disposeIfNotObserved();
+        locationService.disposeIfNotObserved();
     }
 
     public void loadWeatherIfAllPermissionsGranted()
     {
-        locationProvider.requestLocationUpdates();
+        locationService.requestLocationUpdates();
         if (!requestPermissionsIfNeeded())
         {
-            Location lastKnownLocation = this.locationProvider.lastLocation();
+            Location lastKnownLocation = this.locationService.lastLocation();
             this.loadWeather(lastKnownLocation);
         }
     }
@@ -155,11 +174,11 @@ public abstract class WeatherViewModel extends NavigationViewModel
         if (requestCode == REQUEST_CODE_PERM_ACCESS_FINE_LOCATION && grantResults[0] == PackageManager.PERMISSION_GRANTED)
         {
             if (permissionService.isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION))
-                loadWeather(locationProvider.lastLocation());
+                loadWeather(locationService.lastLocation());
         } else if (requestCode == REQUEST_CODE_PERM_ACCESS_COARSE_LOCATION && grantResults[0] == PackageManager.PERMISSION_GRANTED)
         {
             if (permissionService.isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION))
-                loadWeather(locationProvider.lastLocation());
+                loadWeather(locationService.lastLocation());
         }
     }
 
@@ -195,8 +214,21 @@ public abstract class WeatherViewModel extends NavigationViewModel
         super.showError(title, errorMessage);
     }
 
+    protected void showError(Throwable t) throws IOException {
+        String message = t.getMessage();
+        if (t instanceof HttpException) {
+            message = ((HttpException) t).response().errorBody().string();
+        }
+        this.showError("", message);
+    }
+
     public WeatherViewModelState saveState() {
         return new WeatherViewModelState(this.weather.get(), this.icon.get());
+    }
+
+    protected void clearView() {
+        this.weather.set(new EmptyWeather());
+        this.icon.set(null);
     }
 
     public static class WeatherViewModelState implements Parcelable {

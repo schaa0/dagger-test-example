@@ -1,6 +1,7 @@
 package dagger.extension.example.service;
 
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 
 import com.bumptech.glide.RequestManager;
@@ -8,38 +9,43 @@ import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Provider;
 
 import dagger.AllowStubGeneration;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.annotations.NonNull;
 
 public class ImageRequestManager {
 
     private RequestManager requestManager;
 
-    @AllowStubGeneration
-    @Inject
-    public ImageRequestManager(Provider<RequestManager> requestManager){
-        this.requestManager = requestManager.get();
+    @Inject @AllowStubGeneration
+    public ImageRequestManager(RequestManager requestManager){
+        this.requestManager = requestManager;
     }
 
     public Observable<Bitmap> load(String iconUrl) {
-        return Observable.create(e -> getInto(iconUrl, e));
+        if (iconUrl == null || iconUrl.equals("")) {
+            return Observable.empty();
+        }else {
+            return Observable.create(e -> getInto(iconUrl, e));
+        }
     }
 
-    private SimpleTarget<Bitmap> getInto(String iconUrl, final ObservableEmitter<Bitmap> e) {
+    private SimpleTarget<Bitmap> getInto(String iconUrl, final ObservableEmitter<Bitmap> emitter) {
         return requestManager.load(Uri.parse(iconUrl)).asBitmap().into(new SimpleTarget<Bitmap>()
         {
             @Override
             public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation)
             {
-                e.onNext(resource);
+                emitter.onNext(resource);
+                emitter.onComplete();
+            }
+
+            @Override
+            public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                super.onLoadFailed(e, errorDrawable);
+                emitter.onError(e);
             }
         });
     }

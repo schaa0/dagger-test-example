@@ -5,8 +5,6 @@ import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
 import dagger.extension.example.model.search.SearchModel;
 import dagger.extension.example.model.today.TodayWeather;
 import io.reactivex.Observable;
-import io.reactivex.Single;
-import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 
@@ -28,7 +26,7 @@ public interface RetrofitWeatherApi
             ("lat") double latitude, @Query("units") String metric, @Query("lang") String lang, @Query("appid") String apiKey);
 
     @GET("/data/2.5/forecast")
-    Single<SearchModel> searchWeather(@Query("q") String city,
+    Observable<SearchModel> searchWeather(@Query("q") String city,
                                           @Query("units") String metric,
                                           @Query("lang") String lang,
                                           @Query("appid") String apiKey);

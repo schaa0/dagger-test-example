@@ -4,23 +4,24 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Calendar;
+
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.service.DateProvider;
 import dagger.extension.example.service.filter.TodayWeatherResponseFilter;
 import dagger.extension.example.service.filter.TomorrowWeatherResponseFilter;
-import static dagger.extension.example.stubs.Fakes.*;
-
 import dagger.extension.example.stubs.DateProviderStub;
 import dagger.extension.example.stubs.Responses;
 
+import static dagger.extension.example.stubs.Fakes.dateProvider;
 import static dagger.extension.example.stubs.Fakes.fakeResponse;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
-public class UnitTestWeatherParser
+public class TestWeatherParser
 {
 
     private TodayWeatherResponseFilter todayWeatherResponseFilter;

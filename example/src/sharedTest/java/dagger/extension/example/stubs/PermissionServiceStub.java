@@ -2,8 +2,8 @@ package dagger.extension.example.stubs;
 
 import android.support.v7.app.AppCompatActivity;
 
-import dagger.extension.example.service.PermissionService;
 import dagger.extension.example.service.PermissionResult;
+import dagger.extension.example.service.PermissionService;
 
 public class PermissionServiceStub extends PermissionService {
     public PermissionServiceStub(AppCompatActivity activity) {

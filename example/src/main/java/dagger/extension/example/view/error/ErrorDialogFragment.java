@@ -7,7 +7,9 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
+
 import javax.inject.Inject;
+
 import dagger.extension.example.R;
 import dagger.extension.example.databinding.ErrorBinding;
 

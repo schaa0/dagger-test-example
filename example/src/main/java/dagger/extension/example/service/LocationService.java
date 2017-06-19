@@ -14,7 +14,7 @@ import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
 @Singleton
-public class LocationProvider implements LocationListener
+public class LocationService implements LocationListener
 {
 
     public static final int MIN_LOCATION_UPDATE_INTERVAL = 5000;
@@ -25,9 +25,8 @@ public class LocationProvider implements LocationListener
 
     private boolean isActive = false;
 
-    @AllowStubGeneration
-    @Inject
-    public LocationProvider(LocationManager locationManager)
+    @Inject @AllowStubGeneration
+    public LocationService(LocationManager locationManager)
     {
         this.locationManager = locationManager;
     }

@@ -1,6 +1,7 @@
 package dagger.extension.example.stubs;
 
 import android.location.Location;
+
 import java.io.IOException;
 import java.io.InputStream;
 

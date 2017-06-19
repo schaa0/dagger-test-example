@@ -9,7 +9,6 @@ import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
 import dagger.extension.example.model.search.SearchModel;
 import dagger.extension.example.model.today.TodayWeather;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 
 public class WeatherApi {
 
@@ -18,8 +17,7 @@ public class WeatherApi {
     private final String metric;
     private final String apiKey;
 
-    @Inject
-    @AllowStubGeneration
+    @Inject @AllowStubGeneration
     public WeatherApi(RetrofitWeatherApi api,
                       @ApiParam("lang") String lang,
                       @ApiParam("units") String metric,
@@ -43,7 +41,7 @@ public class WeatherApi {
         return api.getForecastWeather(longitude, latitude, metric, lang, apiKey);
     }
 
-    public Single<SearchModel> searchWeather(String city) {
+    public Observable<SearchModel> searchWeather(String city) {
         return api.searchWeather(city, metric, lang, apiKey);
     }
 }

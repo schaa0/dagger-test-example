@@ -71,7 +71,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="@{String.format(@string/temperature_format, vm.weather.temperature)}"
+                        android:text="@{vm.weather.temperature.length() != 0 ? String.format(@string/temperature_format, vm.weather.temperature) : null}"
                         android:padding="8dp"
                         android:textSize="24sp"/>
 
@@ -81,7 +81,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:padding="8dp"
-                        android:text="@{String.format(@string/humidity_format, vm.weather.humidity)}"
+                        android:text="@{vm.weather.humidity.length() != 0 ? String.format(@string/humidity_format, vm.weather.humidity) : null}"
                         android:textSize="24sp"/>
 
                 </LinearLayout>

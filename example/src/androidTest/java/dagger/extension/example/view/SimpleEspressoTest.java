@@ -13,7 +13,9 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.MockSettings;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
@@ -25,11 +27,24 @@ import dagger.extension.example.R;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
 import dagger.extension.example.model.today.TodayWeather;
-import dagger.extension.example.service.LocationProvider;
+import dagger.extension.example.service.LocationService;
+import dagger.extension.example.service.NavigationController;
 import dagger.extension.example.service.WeatherApi;
+import dagger.extension.example.stubs.DateProviderStub;
+import dagger.extension.example.stubs.Fakes;
 import dagger.extension.example.stubs.PermissionServiceStub;
+import dagger.extension.example.stubs.Responses;
 import dagger.extension.example.testcase.UiAutomatorEspressoTestCase;
 import dagger.extension.example.view.main.MainActivity;
+import dagger.extension.example.view.search.SearchAdapter;
+import dagger.extension.example.view.search.SearchViewModel;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
+import okhttp3.MediaType;
+import okhttp3.ResponseBody;
+import retrofit2.HttpException;
+import retrofit2.Response;
+
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.replaceText;
@@ -39,16 +54,21 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withParent;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static dagger.extension.example.matcher.DrawableMatcher.hasNoDrawable;
+import static dagger.extension.example.matcher.EmptyTextMatcher.emptyText;
 import static dagger.extension.example.stubs.Fakes.fakeResponse;
+import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.any;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import dagger.extension.example.stubs.*;
-import dagger.extension.example.view.search.SearchViewModel;
-import io.reactivex.Observable;
 
 @RunWith(AndroidJUnit4.class)
 public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
@@ -58,7 +78,8 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public static final double FAKE_LATITUDE = 1.0;
 
     @Mock WeatherApi weatherApi;
-    @Mock LocationProvider locationProvider;
+    @Mock
+    LocationService locationService;
 
     private MainActivity mActivity;
 
@@ -74,11 +95,11 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         decorate().componentSingleton()
                   .withDateProvider(() -> new DateProviderStub(2017, Calendar.JANUARY, 22, 23, 0, 0))
                   .withWeatherApi(() -> weatherApi)
-                  .withLocationProvider(() -> locationProvider);
+                  .withLocationService(() -> locationService);
 
         Location fakeLocation = Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE);
-        doReturn(fakeLocation).when(locationProvider).lastLocation();
-        doReturn(Observable.empty()).when(locationProvider).onNewLocation();
+        doReturn(fakeLocation).when(locationService).lastLocation();
+        doReturn(Observable.empty()).when(locationService).onNewLocation();
 
     }
 
@@ -126,11 +147,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public void itShouldDisplayTemperatureFromApi() throws IOException
     {
 
-        doReturn(Observable.just(fakeResponse(TomorrowWeather.class, Responses.JSON.TOMORROW_WEATHER)))
-                .when(weatherApi).getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
-
-        doReturn(Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER)))
-                .when(weatherApi).getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
+        this.defaultApiAnswers();
 
         mActivity = rule.launchActivity(null);
         allowPermissionsIfNeeded();
@@ -139,15 +156,18 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText("Temperature: 7.85°C")));
     }
 
+    private void defaultApiAnswers() throws IOException {
+        doReturn(Observable.just(fakeResponse(TomorrowWeather.class, Responses.JSON.TOMORROW_WEATHER)))
+                .when(weatherApi).getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
+
+        doReturn(Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER)))
+                .when(weatherApi).getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
+    }
+
     @Test
     public void weatherDataIsRestoredOnOrientationChange() throws IOException, RemoteException {
-        doReturn(
-                Observable.just(fakeResponse(TomorrowWeather.class, Responses.JSON.TOMORROW_WEATHER))
-        ).when(weatherApi).getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
 
-        doReturn(
-                Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER))
-        ).when(weatherApi).getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
+        this.defaultApiAnswers();
 
         mActivity = rule.launchActivity(null);
         allowPermissionsIfNeeded();
@@ -171,17 +191,60 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     }
 
     @Test
+    public void errorDialogIsShownWhenRequestFails() {
+        final String message = "some exception message";
+        when(weatherApi.getCurrentWeather(FAKE_LONGITUDE, FAKE_LATITUDE)).thenReturn(
+                Observable.error(new HttpException(
+                        Response.error(500, ResponseBody.create(MediaType.parse("text/plain"), message))
+                ))
+        );
+        when(weatherApi.getTomorrowWeather(FAKE_LONGITUDE, FAKE_LATITUDE)).thenReturn(
+                Observable.empty()
+        );
+        rule.launchActivity(null);
+        this.allowPermissionsIfNeeded();
+
+        onView(withText(message)).check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void viewIsClearedWhenARequestFailed() {
+        NavigationController controller = mock(NavigationController.class);
+        decorate().mainActivitySubcomponent().withNavigationController(() -> controller);
+        doNothing().when(controller).showErrorIfNotAlreadyShowing(anyString(), anyString());
+        final String message = "some exception message";
+        when(weatherApi.getCurrentWeather(FAKE_LONGITUDE, FAKE_LATITUDE)).thenReturn(
+                Observable.error(new HttpException(
+                        Response.error(500, ResponseBody.create(MediaType.parse("text/plain"), message))
+                ))
+        );
+        when(weatherApi.getTomorrowWeather(FAKE_LONGITUDE, FAKE_LATITUDE)).thenReturn(
+                Observable.empty()
+        );
+
+        rule.launchActivity(null);
+        this.allowPermissionsIfNeeded();
+
+        onView(withIndex(withId(R.id.imageView), 0)).check(matches(hasNoDrawable()));
+        final int ids[] = new int[]{R.id.cityTextView, R.id.temperatureTextView,
+                R.id.humidityTextView, R.id.descriptionTextView};
+        for (int id : ids) {
+            onView(withIndex(withId(id), 0)).check(matches(emptyText()));
+        }
+    }
+
+    @Test
     public void testSearchIsInvokedWhenSubmittingInSearchView() {
         CountDownLatch latch = new CountDownLatch(1);
         decorate().mainActivitySubcomponent().withPermissionService(PermissionServiceStub::new)
                   .and().searchFragmentSubcomponent()
-                    .withSearchViewModel((navigationController, mainViewModel, searchService, searchAdapterFactory) -> {
-                       return new SearchViewModel(navigationController, mainViewModel, searchService, searchAdapterFactory){
-                           @Override
-                           public void search(String city) {
-                               latch.countDown();
-                           }
-                       };
+                    .withSearchViewModel((navigationController, searchObservable, searchAdapterSubject, searchService, searchAdapterFactory) -> {
+                        return new SearchViewModel(navigationController, searchObservable, searchAdapterSubject, searchService, searchAdapterFactory) {
+                            @Override
+                            public void search(String city) {
+                                latch.countDown();
+                            }
+                        };
                     });
 
         mActivity = rule.launchActivity(null);
@@ -209,6 +272,19 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         SystemClock.sleep(1500);
 
         assertEquals(0, latch.getCount());
+    }
+
+    @Test
+    public void searchFragmentSubscribesToAdapterObservable() throws IOException {
+        this.defaultApiAnswers();
+        final PublishSubject<SearchAdapter> adapterObservable = PublishSubject.create();
+        decorate().searchFragmentSubcomponent().withRxObservableAdapter(() -> adapterObservable);
+        rule.launchActivity(null);
+        ViewInteraction viewPager = onView(
+                allOf(withId(R.id.container), isDisplayed()));
+        viewPager.perform(swipeLeft());
+        viewPager.perform(swipeLeft());
+        assertTrue(adapterObservable.hasObservers());
     }
 
     private static Matcher<View> withIndex(final Matcher<View> matcher, final int index) {

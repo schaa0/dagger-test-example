@@ -8,14 +8,12 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import dagger.AllowStubGeneration;
 
 public class DateProvider {
 
-    @AllowStubGeneration
-    @Inject
+    @Inject @AllowStubGeneration
     public DateProvider() { }
 
     public Calendar getCurrentDate(){

@@ -6,6 +6,7 @@ import android.os.Parcelable;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+
 import dagger.extension.example.model.Weather;
 
 public class TomorrowWeather implements Weather, Parcelable

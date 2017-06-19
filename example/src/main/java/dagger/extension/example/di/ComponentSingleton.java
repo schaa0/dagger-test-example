@@ -45,7 +45,7 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
 
         @Provides
         public static Context context(WeatherApplication application) {
-            return (Context)application;
+            return application;
         }
 
         @Provides

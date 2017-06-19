@@ -16,8 +16,7 @@ public class PermissionService {
     private final AppCompatActivity activity;
     private final PublishSubject<PermissionResult> container = PublishSubject.create();
 
-    @Inject
-    @AllowStubGeneration
+    @Inject @AllowStubGeneration
     public PermissionService(AppCompatActivity activity) {
         this.activity = activity;
     }

@@ -9,8 +9,11 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import dagger.android.AndroidInjection;
@@ -23,8 +26,7 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
-public class MainActivity extends DaggerAppCompatActivity
-{
+public class MainActivity extends DaggerAppCompatActivity implements ViewPager.OnPageChangeListener {
 
     @BindView(R.id.container) ViewPager mViewPager;
     @BindView(R.id.tab_layout1) TabLayout tabLayout;
@@ -46,6 +48,8 @@ public class MainActivity extends DaggerAppCompatActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+
+        mViewPager.addOnPageChangeListener(this);
 
         mViewPager.setAdapter(mSectionsPagerAdapter);
         tabLayout.setupWithViewPager(mViewPager, true);
@@ -104,5 +108,26 @@ public class MainActivity extends DaggerAppCompatActivity
         {
             permissionService.dispatchEvent(new PermissionResult(requestCode, permissions, grantResults));
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        mViewPager.removeOnPageChangeListener(this);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        mainViewModel.onPageChanged(position);
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
     }
 }

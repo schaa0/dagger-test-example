@@ -5,11 +5,10 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
+import dagger.AllowStubGeneration;
 import dagger.extension.example.di.scope.ActivityScope;
 import dagger.extension.example.view.error.ComponentErrorDialogFragment;
-import dagger.extension.example.view.error.ErrorDialogFragment;
 import dagger.extension.example.view.forecast.ForecastActivity;
 
 @ActivityScope
@@ -19,7 +18,7 @@ public class NavigationController {
     private final FragmentManager fm;
     private final ComponentErrorDialogFragment.Builder errorBuilder;
 
-    @Inject
+    @Inject @AllowStubGeneration
     public NavigationController(AppCompatActivity activity, FragmentManager fm, ComponentErrorDialogFragment.Builder errorBuilder) {
         this.activity = activity;
         this.fm = fm;

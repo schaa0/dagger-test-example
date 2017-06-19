@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+
 import java.io.IOException;
 import java.text.ParseException;
 
@@ -19,27 +20,23 @@ import dagger.extension.example.BuildConfig;
 import dagger.extension.example.di.TestWeatherApplication;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.model.today.TodayWeather;
-import dagger.extension.example.service.LocationProvider;
+import dagger.extension.example.service.LocationService;
 import dagger.extension.example.service.NavigationController;
-import dagger.extension.example.service.PermissionService;
 import dagger.extension.example.service.PermissionResult;
+import dagger.extension.example.service.PermissionService;
 import dagger.extension.example.service.WeatherService;
 import dagger.extension.example.service.filter.TodayWeatherResponseFilter;
+import dagger.extension.example.stubs.Fakes;
 import dagger.extension.example.stubs.Responses;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
 import static dagger.extension.example.stubs.Fakes.fakeResponse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -48,7 +45,7 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("MissingPermission")
 @Config(sdk = 21, constants = BuildConfig.class, application = TestWeatherApplication.class)
 @RunWith(RobolectricTestRunner.class)
-public class UnitTestTodayWeatherPresenter
+public class TestTodayWeatherPresenter
 {
 
     private static final int RC_PERM_FINE_LOCATION = TodayWeatherViewModel.REQUEST_CODE_PERM_ACCESS_FINE_LOCATION;
@@ -58,23 +55,26 @@ public class UnitTestTodayWeatherPresenter
 
     @Mock NavigationController navigation;
     @Mock PermissionService pm;
-    @Mock LocationProvider locationProvider;
+    @Mock
+    LocationService locationService;
     @Mock TodayWeatherResponseFilter weatherParser;
     @Mock WeatherService weatherService;
 
     private TodayWeatherViewModel vm;
     private PublishSubject<PermissionResult> permissionSubject;
     private PublishSubject<Location> locationSubject;
+    private PublishSubject<Integer> pageChanged;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         permissionSubject = PublishSubject.create();
         locationSubject = PublishSubject.create();
+        pageChanged = PublishSubject.create();
         doReturn(permissionSubject).when(pm).onPermissionGranted();
-        doReturn(locationSubject).when(locationProvider).onNewLocation();
+        doReturn(locationSubject).when(locationService).onNewLocation();
         doReturn(Observable.empty()).when(weatherService).getCurrentWeather(anyDouble(), anyDouble());
-        vm = new TodayWeatherViewModel(navigation, pm, locationProvider, weatherService, weatherParser);
+        vm = new TodayWeatherViewModel(navigation, pageChanged, pm, locationService, weatherService, weatherParser);
         vm.state = new WeatherViewModel.WeatherViewModelState();
     }
 
@@ -92,20 +92,20 @@ public class UnitTestTodayWeatherPresenter
         when(pm.isPermissionGranted(PERM_COARSE_LOCATION)).thenReturn(false);
         when(pm.isPermissionGranted(PERM_FINE_LOCATION)).thenReturn(false);
         vm.onViewAttached();
-        reset(locationProvider);
+        reset(locationService);
         vm.onPermissionsResult(RC_PERM_COARSE_LOCATION, new String[]{PERM_COARSE_LOCATION},
                 new int[]{PackageManager.PERMISSION_DENIED});
-        verifyZeroInteractions(locationProvider);
+        verifyZeroInteractions(locationService);
         vm.onPermissionsResult(TodayWeatherViewModel.REQUEST_CODE_PERM_ACCESS_FINE_LOCATION,
                 new String[]{PERM_FINE_LOCATION}, new int[]{PackageManager.PERMISSION_DENIED});
-        verifyZeroInteractions(locationProvider);
+        verifyZeroInteractions(locationService);
     }
 
     @Test
     public void mustNotRequestWeatherIfThereIsNoLastKnownLocation() {
         when(pm.isPermissionGranted(PERM_COARSE_LOCATION)).thenReturn(true);
         when(pm.isPermissionGranted(PERM_FINE_LOCATION)).thenReturn(true);
-        when(locationProvider.lastLocation()).thenReturn(null);
+        when(locationService.lastLocation()).thenReturn(null);
         vm.onViewAttached();
         verifyZeroInteractions(weatherService);
     }
@@ -118,7 +118,7 @@ public class UnitTestTodayWeatherPresenter
         Location location = createLocation(1.0, 1.0);
         when(weatherService.getCurrentWeather(1.0, 1.0))
                 .thenReturn(Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER)));
-        when(locationProvider.lastLocation()).thenReturn(location);
+        when(locationService.lastLocation()).thenReturn(location);
         vm.onViewAttached();
         verify(pm, atLeastOnce()).isPermissionGranted(anyString());
     }
@@ -134,10 +134,10 @@ public class UnitTestTodayWeatherPresenter
     @Test
     public void shouldNotLoadForecastsIfNoLocationIsPresent() {
         vm.onViewAttached();
-        reset(locationProvider, pm);
+        reset(locationService, pm);
         when(pm.isPermissionGranted(PERM_COARSE_LOCATION)).thenReturn(true);
         when(pm.isPermissionGranted(PERM_FINE_LOCATION)).thenReturn(true);
-        when(locationProvider.lastLocation()).thenReturn(null);
+        when(locationService.lastLocation()).thenReturn(null);
         vm.loadForecastWeatherDataForToday();
         verifyZeroInteractions(weatherService);
     }
@@ -149,7 +149,7 @@ public class UnitTestTodayWeatherPresenter
         when(pm.isPermissionGranted(PERM_FINE_LOCATION)).thenReturn(true);
         double longitude = 1.0;
         double latitude = 1.0;
-        when(locationProvider.lastLocation()).thenReturn(createLocation(longitude, latitude));
+        when(locationService.lastLocation()).thenReturn(createLocation(longitude, latitude));
         String expectedResult = Responses.createExpectedFilteredResult();
         when(weatherParser.parse(any(ThreeHoursForecastWeather.class))).thenReturn(expectedResult);
         when(weatherService.getForecastWeather(longitude, latitude))
@@ -171,7 +171,7 @@ public class UnitTestTodayWeatherPresenter
 
     @Test
     public void grantingPermissionsShouldTriggerReloadOfWeatherData() {
-        when(locationProvider.lastLocation()).thenReturn(createLocation(1.0, 1.0));
+        when(locationService.lastLocation()).thenReturn(createLocation(1.0, 1.0));
         when(pm.isPermissionGranted(PERM_COARSE_LOCATION)).thenReturn(false);
         when(pm.isPermissionGranted(PERM_FINE_LOCATION)).thenReturn(false);
         vm.onViewAttached();
@@ -193,7 +193,7 @@ public class UnitTestTodayWeatherPresenter
 
     @Test
     public void denieingPermissionsShouldNotTriggerReloadOfWeatherData() {
-        when(locationProvider.lastLocation()).thenReturn(createLocation(1.0, 1.0));
+        when(locationService.lastLocation()).thenReturn(createLocation(1.0, 1.0));
         when(pm.isPermissionGranted(PERM_COARSE_LOCATION)).thenReturn(false);
         when(pm.isPermissionGranted(PERM_FINE_LOCATION)).thenReturn(false);
         vm.onViewAttached();
@@ -204,5 +204,18 @@ public class UnitTestTodayWeatherPresenter
         );
         permissionSubject.onNext(result);
         verifyZeroInteractions(weatherService);
+    }
+
+    @Test
+    public void refreshesIfNecessary() {
+        when(pm.isPermissionGranted(PERM_COARSE_LOCATION)).thenReturn(true);
+        when(pm.isPermissionGranted(PERM_FINE_LOCATION)).thenReturn(true);
+        when(weatherService.getCurrentWeather(1.0, 1.0)).thenReturn(Observable.empty());
+        when(locationService.lastLocation()).thenReturn(Fakes.location(1.0, 1.0));
+        vm.onViewAttached();
+        reset(weatherService);
+        when(weatherService.getCurrentWeather(1.0, 1.0)).thenReturn(Observable.empty());
+        pageChanged.onNext(0);
+        verify(weatherService).getCurrentWeather(1.0, 1.0);
     }
 }
