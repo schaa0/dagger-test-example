@@ -38,11 +38,10 @@ public abstract class WeatherViewModel extends NavigationViewModel
     protected final Observable<Integer> pageChangeObservable;
 
     public final ObservableField<Weather> weather = new ObservableField<>();
-
-    private Location lastLocation = null;
-
     public final ObservableField<Boolean> progressVisibility = new ObservableField<>(false);
     public final ObservableField<Bitmap> icon = new ObservableField<>(null);
+
+    private Location lastLocation = null;
 
     protected final ListCompositeDisposable disposables = new ListCompositeDisposable();
 

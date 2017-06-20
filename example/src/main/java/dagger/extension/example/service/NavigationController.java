@@ -38,7 +38,7 @@ public class NavigationController {
 
     public void toForecastActivity(String item) {
         Intent intent = new Intent(activity, ForecastActivity.class);
-        intent.putExtra(ForecastActivity.KEY_FORECAST, item);
+        intent.putExtra(ForecastActivity.INTENT_KEY_FORECAST, item);
         activity.startActivity(intent);
     }
 

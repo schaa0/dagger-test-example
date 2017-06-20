@@ -14,20 +14,18 @@ import dagger.extension.example.databinding.LayoutThreeHourForecastActivityBindi
 
 public class ForecastActivity extends DaggerAppCompatActivity {
 
-    public static final String KEY_FORECAST = "forecast";
+    public static final String INTENT_KEY_FORECAST = "forecast";
 
     @Inject
     ForecastViewModel vm;
 
-    String forecastWeather;
+    private LayoutThreeHourForecastActivityBinding binding;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        forecastWeather = getIntent().getStringExtra(KEY_FORECAST);
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
-        LayoutThreeHourForecastActivityBinding binding =
-                DataBindingUtil.setContentView(this, R.layout.layout_three_hour_forecast_activity);
+        binding = DataBindingUtil.setContentView(this, R.layout.layout_three_hour_forecast_activity);
         binding.setActivity(this);
         binding.setVm(vm);
         binding.executePendingBindings();
@@ -40,5 +38,11 @@ public class ForecastActivity extends DaggerAppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        binding.unbind();
+        super.onDestroy();
     }
 }

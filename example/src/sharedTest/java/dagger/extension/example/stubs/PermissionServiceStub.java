@@ -6,7 +6,8 @@ import dagger.extension.example.service.PermissionResult;
 import dagger.extension.example.service.PermissionService;
 
 public class PermissionServiceStub extends PermissionService {
-    public PermissionServiceStub(AppCompatActivity activity) {
+
+    public PermissionServiceStub(AppCompatActivity activity, boolean grantsAllPermissions) {
         super(activity);
     }
 

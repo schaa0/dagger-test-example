@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -19,12 +20,18 @@ import butterknife.ButterKnife;
 import dagger.android.AndroidInjection;
 import dagger.android.support.DaggerAppCompatActivity;
 import dagger.extension.example.R;
+import dagger.extension.example.di.qualifier.RxObservable;
 import dagger.extension.example.service.PermissionResult;
 import dagger.extension.example.service.PermissionService;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
+import io.reactivex.Observer;
 import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.subjects.PublishSubject;
+
+import static dagger.extension.example.di.qualifier.RxObservable.Type.PAGE;
+import static dagger.extension.example.di.qualifier.RxObservable.Type.SEARCH;
 
 public class MainActivity extends DaggerAppCompatActivity implements ViewPager.OnPageChangeListener {
 
@@ -35,7 +42,9 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
     @Inject Scheduler scheduler;
     @Inject SectionsPagerAdapter mSectionsPagerAdapter;
     @Inject PermissionService permissionService;
-    @Inject MainViewModel mainViewModel;
+
+    @Inject @RxObservable(SEARCH) PublishSubject<String> publishSubject;
+    @Inject @RxObservable(PAGE) PublishSubject<Integer> publishPageChange;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -68,9 +77,7 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
             .doOnNext(disposable -> mViewPager.setCurrentItem(SectionsPagerAdapter.POSITION_SEARCH, true))
             .doOnNext(s -> searchView.clearFocus())
             .observeOn(this.scheduler)
-            .subscribe(query -> {
-                mainViewModel.onSearchQuery(query);
-            }, Throwable::printStackTrace);
+            .subscribeWith(publishSubject);
         return true;
     }
 
@@ -123,7 +130,7 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
 
     @Override
     public void onPageSelected(int position) {
-        mainViewModel.onPageChanged(position);
+        publishPageChange.onNext(position);
     }
 
     @Override

@@ -13,9 +13,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.MockSettings;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
@@ -57,9 +55,9 @@ import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static dagger.extension.example.matcher.DrawableMatcher.hasNoDrawable;
 import static dagger.extension.example.matcher.EmptyTextMatcher.emptyText;
 import static dagger.extension.example.stubs.Fakes.fakeResponse;
+import static dagger.extension.example.stubs.Fakes.location;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.any;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -67,6 +65,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -78,8 +78,9 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public static final double FAKE_LATITUDE = 1.0;
 
     @Mock WeatherApi weatherApi;
-    @Mock
-    LocationService locationService;
+    @Mock LocationService locationService;
+
+    PublishSubject<Location> locationSubject = PublishSubject.create();
 
     private MainActivity mActivity;
 
@@ -91,15 +92,15 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     {
         super.setUp();
         MockitoAnnotations.initMocks(this);
+        this.defaultWeatherApiAnswers();
+        Location fakeLocation = Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE);
+        doReturn(fakeLocation).when(locationService).lastLocation();
+        doReturn(locationSubject).when(locationService).onNewLocation();
 
         decorate().componentSingleton()
                   .withDateProvider(() -> new DateProviderStub(2017, Calendar.JANUARY, 22, 23, 0, 0))
                   .withWeatherApi(() -> weatherApi)
                   .withLocationService(() -> locationService);
-
-        Location fakeLocation = Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE);
-        doReturn(fakeLocation).when(locationService).lastLocation();
-        doReturn(Observable.empty()).when(locationService).onNewLocation();
 
     }
 
@@ -144,10 +145,18 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     }
 
     @Test
+    public void itShouldRefreshTheViewWhenTheLocationChanged() throws IOException {
+        rule.launchActivity(null);
+        reset(weatherApi);
+        this.defaultWeatherApiAnswers();
+        locationSubject.onNext(Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE));
+        verify(weatherApi).getCurrentWeather(FAKE_LONGITUDE, FAKE_LATITUDE);
+        verify(weatherApi).getTomorrowWeather(FAKE_LONGITUDE, FAKE_LATITUDE);
+    }
+
+    @Test
     public void itShouldDisplayTemperatureFromApi() throws IOException
     {
-
-        this.defaultApiAnswers();
 
         mActivity = rule.launchActivity(null);
         allowPermissionsIfNeeded();
@@ -156,18 +165,16 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText("Temperature: 7.85°C")));
     }
 
-    private void defaultApiAnswers() throws IOException {
+    private void defaultWeatherApiAnswers() throws IOException {
         doReturn(Observable.just(fakeResponse(TomorrowWeather.class, Responses.JSON.TOMORROW_WEATHER)))
-                .when(weatherApi).getTomorrowWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
+                .when(weatherApi).getTomorrowWeather(anyDouble(), anyDouble());
 
         doReturn(Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER)))
-                .when(weatherApi).getCurrentWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE));
+                .when(weatherApi).getCurrentWeather(anyDouble(), anyDouble());
     }
 
     @Test
     public void weatherDataIsRestoredOnOrientationChange() throws IOException, RemoteException {
-
-        this.defaultApiAnswers();
 
         mActivity = rule.launchActivity(null);
         allowPermissionsIfNeeded();
@@ -183,8 +190,13 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText(todayTemperature)));
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
 
+        reset(weatherApi);
+        this.defaultWeatherApiAnswers();
+
         device().setOrientationNatural();
 
+        verify(weatherApi, never()).getCurrentWeather(anyDouble(), anyDouble());
+        verify(weatherApi, never()).getTomorrowWeather(anyDouble(), anyDouble());
         onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText(todayTemperature)));
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
 
@@ -236,7 +248,8 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     @Test
     public void testSearchIsInvokedWhenSubmittingInSearchView() {
         CountDownLatch latch = new CountDownLatch(1);
-        decorate().mainActivitySubcomponent().withPermissionService(PermissionServiceStub::new)
+        decorate().mainActivitySubcomponent()
+                  .withPermissionService(activity -> new PermissionServiceStub(activity, false))
                   .and().searchFragmentSubcomponent()
                     .withSearchViewModel((navigationController, searchObservable, searchAdapterSubject, searchService, searchAdapterFactory) -> {
                         return new SearchViewModel(navigationController, searchObservable, searchAdapterSubject, searchService, searchAdapterFactory) {
@@ -276,7 +289,6 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
 
     @Test
     public void searchFragmentSubscribesToAdapterObservable() throws IOException {
-        this.defaultApiAnswers();
         final PublishSubject<SearchAdapter> adapterObservable = PublishSubject.create();
         decorate().searchFragmentSubcomponent().withRxObservableAdapter(() -> adapterObservable);
         rule.launchActivity(null);

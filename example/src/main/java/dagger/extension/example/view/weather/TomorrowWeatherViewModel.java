@@ -14,11 +14,13 @@ import dagger.extension.example.service.filter.TomorrowWeatherResponseFilter;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
+import static dagger.extension.example.di.qualifier.RxObservable.Type.PAGE;
+
 public class TomorrowWeatherViewModel extends WeatherViewModel {
 
     @Inject
     public TomorrowWeatherViewModel(NavigationController navigation,
-                                    @RxObservable("page") Observable<Integer> pageChangeObservable,
+                                    @RxObservable(PAGE) Observable<Integer> pageChangeObservable,
                                     PermissionService permissionService,
                                     LocationService locationService,
                                     WeatherService weatherService,

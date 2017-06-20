@@ -12,4 +12,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface RxObservable {
     String value() default "";
+    class Type {
+        public static final String SEARCH = "search";
+        public static final String PAGE = "page";
+    }
 }

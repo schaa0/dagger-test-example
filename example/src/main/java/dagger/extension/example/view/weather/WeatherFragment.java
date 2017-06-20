@@ -20,8 +20,7 @@ public abstract class WeatherFragment extends Fragment
 
     private static final String VIEW_MODEL_STATE = "ViewModelState";
 
-    @Inject
-    PermissionService permissionService;
+    @Inject PermissionService permissionService;
 
     WeatherViewModel.WeatherViewModelState state;
     private LayoutWeatherFragmentBinding binding;

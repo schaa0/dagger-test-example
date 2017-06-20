@@ -1,29 +1,20 @@
 package dagger.extension.example.view.forecast;
 
-import android.support.v4.app.FragmentManager;
-import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
 
-import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import dagger.extension.example.di.FragmentBindingsModule;
+import dagger.extension.example.di.ActivityModule;
 import dagger.extension.example.di.qualifier.ForecastWeather;
 import dagger.extension.example.view.error.ComponentErrorDialogFragment;
 
 @Module(subcomponents = {ComponentErrorDialogFragment.class})
-public abstract class ForecastActivityModule {
-
-    @Binds
-    public abstract AppCompatActivity appCompatActivity(ForecastActivity activity);
+public abstract class ForecastActivityModule extends ActivityModule<ForecastActivity> {
 
     @Provides
     @ForecastWeather("data")
-    public static String forecastWeather(ForecastActivity activity) {
-        return activity.forecastWeather;
+    public static String forecastWeather(Intent intent) {
+        return intent.getStringExtra(ForecastActivity.INTENT_KEY_FORECAST);
     }
 
-    @Provides
-    public static FragmentManager fragmentManager(AppCompatActivity activity) {
-        return activity.getSupportFragmentManager();
-    }
 }
