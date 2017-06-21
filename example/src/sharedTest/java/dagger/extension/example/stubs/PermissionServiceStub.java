@@ -7,22 +7,16 @@ import dagger.extension.example.service.PermissionService;
 
 public class PermissionServiceStub extends PermissionService {
 
+    private final boolean grantsAllPermissions;
+
     public PermissionServiceStub(AppCompatActivity activity, boolean grantsAllPermissions) {
         super(activity);
+        this.grantsAllPermissions = grantsAllPermissions;
     }
 
     @Override
     public boolean isPermissionGranted(String permission) {
-        return false;
+        return grantsAllPermissions;
     }
 
-    @Override
-    public void requestPermission(String permission, int requestCode) {
-        // don't forward permission request
-    }
-
-    @Override
-    public void dispatchEvent(PermissionResult permissionEvent) {
-        // don't dispatch permission result
-    }
 }

@@ -16,10 +16,13 @@ import dagger.extension.example.view.weather.TomorrowWeatherFragment;
 @ActivityScope
 public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
-    private static final int PAGE_COUNT = 3;
+    public static final int POSITION_TODAY = 0;
+    public static final int POSITION_TOMORROW = 1;
     public static final int POSITION_SEARCH = 2;
 
-    private final Map<Integer, String> pageTitles;
+    private static final int PAGE_COUNT = 3;
+
+    public final Map<Integer, String> pageTitles;
 
     @Inject
     public SectionsPagerAdapter(FragmentManager fm, Map<Integer, String> pageTitles) {

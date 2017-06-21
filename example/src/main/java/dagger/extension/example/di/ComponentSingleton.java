@@ -22,13 +22,18 @@ import dagger.android.AndroidInjector;
 import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.extension.example.R;
 import dagger.extension.example.di.qualifier.ApiParam;
+import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.service.RetrofitWeatherApi;
 import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+
+import static dagger.extension.example.di.qualifier.RxScheduler.Type.MAIN;
+import static dagger.extension.example.di.qualifier.RxScheduler.Type.NETWORK;
 
 @Component(modules = {ComponentSingleton.ModuleSingleton.class, AndroidSupportInjectionModule.class})
 @Singleton
@@ -98,9 +103,14 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
             return Glide.with(context);
         }
 
-        @Provides @Singleton
-        public static Scheduler scheduler() {
+        @Provides @RxScheduler(NETWORK) @Singleton
+        public static Scheduler networkScheduler() {
             return Schedulers.from(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+
+        @Provides @RxScheduler(MAIN) @Singleton
+        public static Scheduler mainScheduler() {
+            return AndroidSchedulers.mainThread();
         }
 
     }

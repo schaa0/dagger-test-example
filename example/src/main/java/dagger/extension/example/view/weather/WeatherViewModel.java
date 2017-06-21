@@ -22,6 +22,8 @@ import dagger.extension.example.service.WeatherService;
 import dagger.extension.example.service.filter.WeatherResponseFilter;
 import dagger.extension.example.view.main.NavigationViewModel;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.internal.disposables.ListCompositeDisposable;
 import retrofit2.HttpException;
 
@@ -35,6 +37,7 @@ public abstract class WeatherViewModel extends NavigationViewModel
     protected final LocationService locationService;
     protected final WeatherService weatherService;
     protected final WeatherResponseFilter weatherParser;
+    protected final Scheduler androidScheduler;
     protected final Observable<Integer> pageChangeObservable;
 
     public final ObservableField<Weather> weather = new ObservableField<>();
@@ -43,13 +46,14 @@ public abstract class WeatherViewModel extends NavigationViewModel
 
     private Location lastLocation = null;
 
-    protected final ListCompositeDisposable disposables = new ListCompositeDisposable();
+    protected final CompositeDisposable disposables = new CompositeDisposable();
 
     @Inject WeatherViewModelState state;
 
     public WeatherViewModel(NavigationController navigation, Observable<Integer> pageChangeObservable,
                             PermissionService permissionService, LocationService locationService,
-                            WeatherService weatherService, WeatherResponseFilter weatherParser)
+                            WeatherService weatherService, WeatherResponseFilter weatherParser,
+                            Scheduler androidScheduler)
     {
         super(navigation);
         this.pageChangeObservable = pageChangeObservable;
@@ -57,6 +61,7 @@ public abstract class WeatherViewModel extends NavigationViewModel
         this.locationService = locationService;
         this.weatherService = weatherService;
         this.weatherParser = weatherParser;
+        this.androidScheduler = androidScheduler;
     }
 
     protected abstract void loadWeather(double longitude, double latitude);
@@ -68,6 +73,11 @@ public abstract class WeatherViewModel extends NavigationViewModel
         disposables.add(pageChangeObservable
                                      .filter(this::isOwnPosition)
                                      .subscribe(this::refreshIfNecessary));
+
+        if (!locationService.isGpsProviderEnabled()) {
+            navigate().toLocationSettings();
+        }
+
         if (this.isStatePresent()) {
             this.restoreState();
         }else {

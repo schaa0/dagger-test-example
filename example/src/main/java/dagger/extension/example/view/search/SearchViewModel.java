@@ -7,14 +7,18 @@ import javax.inject.Named;
 
 import dagger.AllowStubGeneration;
 import dagger.extension.example.di.qualifier.RxObservable;
+import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.service.NavigationController;
 import dagger.extension.example.service.SearchService;
 import dagger.extension.example.view.main.NavigationViewModel;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.subjects.PublishSubject;
+
+import static dagger.extension.example.di.qualifier.RxScheduler.Type.MAIN;
 
 public class SearchViewModel extends NavigationViewModel {
 
@@ -23,6 +27,7 @@ public class SearchViewModel extends NavigationViewModel {
     private final PublishSubject<SearchAdapter> searchAdapterSubject;
     private final SearchService searchService;
     private final SearchAdapterFactory searchAdapterFactory;
+    private final Scheduler androidScheduler;
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private SearchAdapter adapter;
@@ -31,11 +36,13 @@ public class SearchViewModel extends NavigationViewModel {
     public SearchViewModel(NavigationController navigationController,
                            @RxObservable("search") Observable<String> searchObservable,
                            @RxObservable("adapter") PublishSubject<SearchAdapter> searchAdapterSubject,
-                           SearchService searchService, SearchAdapterFactory searchAdapterFactory) {
+                           SearchService searchService, SearchAdapterFactory searchAdapterFactory,
+                           @RxScheduler(MAIN) Scheduler androidScheduler) {
         super(navigationController);
         this.searchAdapterSubject = searchAdapterSubject;
         this.searchService = searchService;
         this.searchAdapterFactory = searchAdapterFactory;
+        this.androidScheduler = androidScheduler;
         compositeDisposable.add(searchObservable.subscribe(this::search));
     }
 
@@ -59,7 +66,7 @@ public class SearchViewModel extends NavigationViewModel {
             .flatMap(Observable::fromIterable)
             .map(weatherInfo -> new SearchItemViewModel(weatherInfo.getDtTxt(), weatherInfo.temperature(), weatherInfo.humidity()))
             .toList()
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(androidScheduler)
             .subscribe((searchItemViewModels) -> {
                 if (adapter != null) {
                     adapter.updateWeatherInfos(searchItemViewModels);

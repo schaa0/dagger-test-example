@@ -25,9 +25,12 @@
 #-renamesourcefileattribute SourceFile
 
 -dontwarn okio.**
+-dontwarn okhttp3.**
 -dontwarn retrofit2.**
+-dontwarn com.google.errorprone.**
+-dontwarn javax.annotation.**
 
-#-keepattributes SourceFile,LineNumberTable,Signature,*Annotation*
+-keepattributes *Annotation*
 
 -keep class com.google.gson.** { *; }
 -keep class sun.misc.Unsafe { *; }
@@ -46,4 +49,4 @@
     @retrofit.http.* <methods>;
 }
 
--repackageclasses
+-keep class android.support.v7.widget.SearchView { *; }

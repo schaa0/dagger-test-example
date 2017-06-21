@@ -5,11 +5,14 @@ import android.graphics.Bitmap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
 import dagger.extension.example.model.today.TodayWeather;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
+
+import static dagger.extension.example.di.qualifier.RxScheduler.Type.NETWORK;
 
 @Singleton
 public class WeatherService
@@ -20,7 +23,7 @@ public class WeatherService
     private final ImageRequestManager imageRequestManager;
 
     @Inject
-    public WeatherService(WeatherApi api, Scheduler scheduler, ImageRequestManager imageRequestManager){
+    public WeatherService(WeatherApi api, @RxScheduler(NETWORK) Scheduler scheduler, ImageRequestManager imageRequestManager){
         this.api = api;
         this.scheduler = scheduler;
         this.imageRequestManager = imageRequestManager;

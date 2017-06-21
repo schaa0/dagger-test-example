@@ -21,6 +21,7 @@ import dagger.android.AndroidInjection;
 import dagger.android.support.DaggerAppCompatActivity;
 import dagger.extension.example.R;
 import dagger.extension.example.di.qualifier.RxObservable;
+import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.service.PermissionResult;
 import dagger.extension.example.service.PermissionService;
 import io.reactivex.Observable;
@@ -32,6 +33,8 @@ import io.reactivex.subjects.PublishSubject;
 
 import static dagger.extension.example.di.qualifier.RxObservable.Type.PAGE;
 import static dagger.extension.example.di.qualifier.RxObservable.Type.SEARCH;
+import static dagger.extension.example.di.qualifier.RxScheduler.Type.MAIN;
+import static dagger.extension.example.di.qualifier.RxScheduler.Type.NETWORK;
 
 public class MainActivity extends DaggerAppCompatActivity implements ViewPager.OnPageChangeListener {
 
@@ -39,20 +42,20 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
     @BindView(R.id.tab_layout1) TabLayout tabLayout;
     @BindView(R.id.toolbar) Toolbar toolbar;
 
-    @Inject Scheduler scheduler;
     @Inject SectionsPagerAdapter mSectionsPagerAdapter;
     @Inject PermissionService permissionService;
 
     @Inject @RxObservable(SEARCH) PublishSubject<String> publishSubject;
     @Inject @RxObservable(PAGE) PublishSubject<Integer> publishPageChange;
 
+    @Inject @RxScheduler(MAIN) Scheduler androidScheduler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-        long start = System.nanoTime();
-        AndroidInjection.inject(this);
+        /*long start = System.nanoTime();
         long end = System.nanoTime() - start;
-        Log.d(MainActivity.class.getName(), String.format("Average inject time: %d ms", Math.round(end / 1000.0 / 1000.0)));
+        Log.d(MainActivity.class.getName(), String.format("Average inject time: %d ms", Math.round(end / 1000.0 / 1000.0)));*/
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
@@ -73,10 +76,9 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
         this.searchViewObservable(searchView)
             .distinctUntilChanged()
             .debounce(1000, TimeUnit.MILLISECONDS)
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(androidScheduler)
             .doOnNext(disposable -> mViewPager.setCurrentItem(SectionsPagerAdapter.POSITION_SEARCH, true))
             .doOnNext(s -> searchView.clearFocus())
-            .observeOn(this.scheduler)
             .subscribeWith(publishSubject);
         return true;
     }

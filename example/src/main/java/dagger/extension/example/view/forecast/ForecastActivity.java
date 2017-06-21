@@ -16,8 +16,7 @@ public class ForecastActivity extends DaggerAppCompatActivity {
 
     public static final String INTENT_KEY_FORECAST = "forecast";
 
-    @Inject
-    ForecastViewModel vm;
+    @Inject ForecastViewModel vm;
 
     private LayoutThreeHourForecastActivityBinding binding;
 

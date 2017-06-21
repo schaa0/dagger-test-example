@@ -56,6 +56,10 @@ public class LocationService implements LocationListener
         return this.locationManager.getBestProvider(criteria, false);
     }
 
+    public boolean isGpsProviderEnabled() {
+        return this.locationManager.isProviderEnabled("gps");
+    }
+
     public void requestLocationUpdates()
     {
         if (this.isActive || !this.locationManager.isProviderEnabled(getBestProvider())) {

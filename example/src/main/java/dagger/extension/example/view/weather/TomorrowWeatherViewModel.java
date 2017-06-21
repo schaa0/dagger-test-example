@@ -5,6 +5,7 @@ import android.location.Location;
 import javax.inject.Inject;
 
 import dagger.extension.example.di.qualifier.RxObservable;
+import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.model.Weather;
 import dagger.extension.example.service.LocationService;
 import dagger.extension.example.service.NavigationController;
@@ -12,9 +13,12 @@ import dagger.extension.example.service.PermissionService;
 import dagger.extension.example.service.WeatherService;
 import dagger.extension.example.service.filter.TomorrowWeatherResponseFilter;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
 import static dagger.extension.example.di.qualifier.RxObservable.Type.PAGE;
+import static dagger.extension.example.di.qualifier.RxScheduler.Type.MAIN;
+import static dagger.extension.example.di.qualifier.RxScheduler.Type.NETWORK;
 
 public class TomorrowWeatherViewModel extends WeatherViewModel {
 
@@ -24,8 +28,9 @@ public class TomorrowWeatherViewModel extends WeatherViewModel {
                                     PermissionService permissionService,
                                     LocationService locationService,
                                     WeatherService weatherService,
-                                    TomorrowWeatherResponseFilter weatherParser) {
-        super(navigation, pageChangeObservable, permissionService, locationService, weatherService, weatherParser);
+                                    TomorrowWeatherResponseFilter weatherParser,
+                                    @RxScheduler(MAIN) Scheduler androidScheduler) {
+        super(navigation, pageChangeObservable, permissionService, locationService, weatherService, weatherParser, androidScheduler);
     }
 
     @Override
@@ -33,7 +38,7 @@ public class TomorrowWeatherViewModel extends WeatherViewModel {
     {
             dispatchRequestStarted();
             disposables.add(weatherService.getTomorrowWeather(longitude, latitude)
-                    .observeOn(AndroidSchedulers.mainThread())
+                    .observeOn(androidScheduler)
                     .subscribe(this::handleWeatherResult, t -> {
                         this.showError(t);
                         this.clearView();
@@ -61,7 +66,7 @@ public class TomorrowWeatherViewModel extends WeatherViewModel {
             dispatchRequestStarted();
             weatherService.getForecastWeather(longitude, latitude)
                     .map(weatherParser::parse)
-                    .observeOn(AndroidSchedulers.mainThread())
+                    .observeOn(androidScheduler)
                     .subscribe(this::handleForecastDataResult, this::showError);
         }
     }

@@ -1,11 +1,17 @@
 package dagger.extension.example.view;
 
+import android.content.Context;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.ViewInteraction;
+import android.support.test.internal.runner.TestRequestBuilder;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
+
+import com.linkedin.android.testbutler.TestButler;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -27,7 +33,9 @@ import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
 import dagger.extension.example.model.today.TodayWeather;
 import dagger.extension.example.service.LocationService;
 import dagger.extension.example.service.NavigationController;
+import dagger.extension.example.service.SearchService;
 import dagger.extension.example.service.WeatherApi;
+import dagger.extension.example.stub.SearchViewModelStubDelegate;
 import dagger.extension.example.stubs.DateProviderStub;
 import dagger.extension.example.stubs.Fakes;
 import dagger.extension.example.stubs.PermissionServiceStub;
@@ -35,8 +43,11 @@ import dagger.extension.example.stubs.Responses;
 import dagger.extension.example.testcase.UiAutomatorEspressoTestCase;
 import dagger.extension.example.view.main.MainActivity;
 import dagger.extension.example.view.search.SearchAdapter;
+import dagger.extension.example.view.search.SearchAdapterFactory;
 import dagger.extension.example.view.search.SearchViewModel;
+import delegates.SearchViewModelDelegate;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.subjects.PublishSubject;
 import okhttp3.MediaType;
 import okhttp3.ResponseBody;
@@ -91,9 +102,11 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public void setUp() throws Exception
     {
         super.setUp();
+        TestButler.verifyAnimationsDisabled(InstrumentationRegistry.getTargetContext());
         MockitoAnnotations.initMocks(this);
         this.defaultWeatherApiAnswers();
         Location fakeLocation = Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE);
+        doReturn(true).when(locationService).isGpsProviderEnabled();
         doReturn(fakeLocation).when(locationService).lastLocation();
         doReturn(locationSubject).when(locationService).onNewLocation();
 
@@ -186,6 +199,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
 
         device().setOrientationLeft();
+        SystemClock.sleep(500);
 
         onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText(todayTemperature)));
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
@@ -193,7 +207,9 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         reset(weatherApi);
         this.defaultWeatherApiAnswers();
 
-        device().setOrientationNatural();
+        device().unfreezeRotation();
+
+        SystemClock.sleep(500);
 
         verify(weatherApi, never()).getCurrentWeather(anyDouble(), anyDouble());
         verify(weatherApi, never()).getTomorrowWeather(anyDouble(), anyDouble());
@@ -249,16 +265,9 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public void testSearchIsInvokedWhenSubmittingInSearchView() {
         CountDownLatch latch = new CountDownLatch(1);
         decorate().mainActivitySubcomponent()
-                  .withPermissionService(activity -> new PermissionServiceStub(activity, false))
+                    .withPermissionService(activity -> new PermissionServiceStub(activity, false))
                   .and().searchFragmentSubcomponent()
-                    .withSearchViewModel((navigationController, searchObservable, searchAdapterSubject, searchService, searchAdapterFactory) -> {
-                        return new SearchViewModel(navigationController, searchObservable, searchAdapterSubject, searchService, searchAdapterFactory) {
-                            @Override
-                            public void search(String city) {
-                                latch.countDown();
-                            }
-                        };
-                    });
+                    .withSearchViewModel(new SearchViewModelStubDelegate(latch));
 
         mActivity = rule.launchActivity(null);
         this.allowPermissionsIfNeeded();

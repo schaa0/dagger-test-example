@@ -16,15 +16,11 @@ import dagger.multibindings.IntoMap;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
-import static dagger.extension.example.di.qualifier.RxObservable.Type.PAGE;
-import static dagger.extension.example.di.qualifier.RxObservable.Type.SEARCH;
+import static dagger.extension.example.di.qualifier.RxObservable.Type.*;
+import static dagger.extension.example.view.main.SectionsPagerAdapter.*;
 
 @Module(includes = {FragmentBindingsModule.class})
 public abstract class MainActivityModule extends ActivityModule<MainActivity> {
-
-    private static final int KEY_TODAY = 0;
-    private static final int KEY_TOMORROW = 1;
-    private static final int KEY_SEARCH = 2;
 
     @ActivityScope @Provides @RxObservable(SEARCH) @AllowStubGeneration
     public static PublishSubject<String> searchQuerySubject() { return PublishSubject.create(); }
@@ -38,17 +34,17 @@ public abstract class MainActivityModule extends ActivityModule<MainActivity> {
     @Binds @RxObservable(PAGE)
     public abstract Observable<Integer> bindPageChangeSubjectToObservable(@RxObservable(PAGE) PublishSubject<Integer> s);
 
-    @Provides @IntKey(KEY_TODAY) @IntoMap
+    @Provides @IntKey(POSITION_TODAY) @IntoMap
     public static String today(Context context) {
         return context.getString(R.string.today);
     }
 
-    @Provides @IntKey(KEY_TOMORROW) @IntoMap @AllowStubGeneration
+    @Provides @IntKey(POSITION_TOMORROW) @IntoMap @AllowStubGeneration
     public static String tomorrow(Context context) {
         return context.getString(R.string.tomorrow);
     }
 
-    @Provides @IntKey(KEY_SEARCH) @IntoMap
+    @Provides @IntKey(POSITION_SEARCH) @IntoMap
     public static String search(Context context) {
         return context.getString(R.string.search);
     }

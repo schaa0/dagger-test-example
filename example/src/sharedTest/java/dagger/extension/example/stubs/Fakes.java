@@ -9,6 +9,7 @@ import static dagger.extension.example.stubs.Responses.jsonToPojo;
 import static dagger.extension.example.stubs.Responses.readFullyAsString;
 
 public class Fakes {
+
     public static Location location(double lng, double lat) {
         Location location = new Location("");
         location.setLongitude(lng);
