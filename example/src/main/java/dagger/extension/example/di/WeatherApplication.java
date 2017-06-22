@@ -24,6 +24,4 @@ public class WeatherApplication extends DaggerHookApplication implements HasActi
     public DispatchingAndroidInjector<Activity> activityInjector() {
         return this.activityInjector;
     }
-
-
 }

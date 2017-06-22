@@ -24,6 +24,7 @@ import dagger.extension.example.R;
 import dagger.extension.example.di.qualifier.ApiParam;
 import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.service.RetrofitWeatherApi;
+import dagger.extension.example.service.WeatherService;
 import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;

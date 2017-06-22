@@ -14,6 +14,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.text.ParseException;
+
+import dagger.extension.example.di.DaggerComponentSingleton;
+import dagger.extension.example.di.TestWeatherApplication;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.model.today.TodayWeather;
 import dagger.extension.example.scheduler.CurrentThreadExecutor;

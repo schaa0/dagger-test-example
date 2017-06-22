@@ -61,6 +61,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:26.0.0-beta2'
     compile 'com.android.support:design:26.0.0-beta2'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+
     compile files('libs/dagger-fork.jar')
     compile files('libs/dagger-android-fork.jar')
     compile(name: 'dagger-android-support-fork', ext: 'aar')
@@ -68,8 +69,10 @@ dependencies {
     annotationProcessor files('libs/dagger-producers-fork.jar')
     annotationProcessor files('libs/dagger-compiler-fork.jar')
     annotationProcessor files('libs/dagger-android-compiler-fork.jar')
-    androidTestAnnotationProcessor files('libs/dagger-decoder-fork.jar')
+
+    testCompile(name: 'dagger-android-testcase-fork', ext: 'aar')
     androidTestCompile(name: 'dagger-android-testcase-fork', ext: 'aar')
+    androidTestAnnotationProcessor files('libs/dagger-decoder-fork.jar')
     testAnnotationProcessor files('libs/dagger-decoder-fork.jar')
 
     testCompile 'junit:junit:4.12'
