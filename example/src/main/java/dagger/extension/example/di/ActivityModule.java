@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.extension.example.model.EmptyWeatherFactory;
 
 @Module
 public abstract class ActivityModule<T extends AppCompatActivity> {

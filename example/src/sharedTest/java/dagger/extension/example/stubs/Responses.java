@@ -6,6 +6,11 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
+import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
+import dagger.extension.example.model.search.SearchModel;
+import dagger.extension.example.model.today.TodayWeather;
+
 import static dagger.extension.example.stubs.Responses.RESULT.FILTERED_RESULT;
 import static dagger.extension.example.stubs.Responses.RESULT.getResult;
 
@@ -41,20 +46,26 @@ public class Responses
         TOMORROW_WEATHER,
         THREE_HOUR_FORECAST,
         FORECAST_RESULT,
-        FORECAST_WITH_YEAR_CHANGE;
+        FORECAST_WITH_YEAR_CHANGE,
+        SEARCH;
 
-        private static Map<JSON, String> map = new HashMap<>();
+        private static Map<JSON, Object[]> map = new HashMap<>();
         static {
-            map.put(TODAY_WEATHER, "response/today_weather.json");
-            map.put(TOMORROW_WEATHER, "response/tomorrow_weather.json");
-            map.put(FORECAST_RESULT, "response/forecast_result.json");
-            map.put(FORECAST_WITH_YEAR_CHANGE, "response/forecast_with_year_change.json");
-            map.put(THREE_HOUR_FORECAST, "response/three_hour_forecast.json");
+            map.put(TODAY_WEATHER, new Object[] {"response/today_weather.json", TodayWeather.class });
+            map.put(TOMORROW_WEATHER, new Object[] { "response/tomorrow_weather.json", TomorrowWeather.class});
+            map.put(FORECAST_RESULT, new Object[] {"response/forecast_result.json", ThreeHoursForecastWeather.class });
+            map.put(FORECAST_WITH_YEAR_CHANGE, new Object[] {"response/forecast_with_year_change.json", ThreeHoursForecastWeather.class });
+            map.put(THREE_HOUR_FORECAST, new Object[] {"response/three_hour_forecast.json", ThreeHoursForecastWeather.class });
+            map.put(SEARCH, new Object[] {"response/three_hour_forecast.json", SearchModel.class });
         }
 
         public static InputStream load(JSON type) {
-            String name = map.get(type);
+            String name = map.get(type)[0].toString();
             return JSON.class.getClassLoader().getResourceAsStream(name);
+        }
+
+        public static <T> Class<T> targetClass(JSON type) {
+            return (Class<T>) map.get(type)[1];
         }
     }
 
@@ -65,11 +76,6 @@ public class Responses
     static String readFullyAsString(InputStream inputStream, String encoding)
             throws IOException {
         return readFully(inputStream).toString(encoding);
-    }
-
-    private static byte[] readFullyAsBytes(InputStream inputStream)
-            throws IOException {
-        return readFully(inputStream).toByteArray();
     }
 
     private static ByteArrayOutputStream readFully(InputStream inputStream)

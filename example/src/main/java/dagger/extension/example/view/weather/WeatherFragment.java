@@ -1,5 +1,6 @@
 package dagger.extension.example.view.weather;
 
+import android.content.Context;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -18,19 +19,22 @@ import dagger.extension.example.service.PermissionService;
 public abstract class WeatherFragment extends Fragment
 {
 
-    private static final String VIEW_MODEL_STATE = "ViewModelState";
+    public static final String VIEW_MODEL_STATE = "ViewModelState";
 
     @Inject PermissionService permissionService;
 
-    WeatherViewModel.WeatherViewModelState state;
+
     private LayoutWeatherFragmentBinding binding;
+    @Nullable private Bundle savedInstanceState;
+
+    @Nullable public Bundle getSavedInstanceState() {
+        return savedInstanceState;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        this.savedInstanceState = savedInstanceState;
         super.onCreate(savedInstanceState);
-        state = savedInstanceState != null ?
-                savedInstanceState.getParcelable(VIEW_MODEL_STATE) :
-                new WeatherViewModel.WeatherViewModelState();
         AndroidSupportInjection.inject(this);
     }
 
@@ -48,6 +52,12 @@ public abstract class WeatherFragment extends Fragment
         binding.setFm(this);
         binding.executePendingBindings();
         viewModel().onViewAttached();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        viewModel().onRefresh();
     }
 
     @Override

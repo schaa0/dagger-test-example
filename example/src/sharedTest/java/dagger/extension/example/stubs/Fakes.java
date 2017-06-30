@@ -21,8 +21,8 @@ public class Fakes {
         return new DateProviderStub(year, month, day, hour, minutes, seconds);
     }
 
-    public static <T> T fakeResponse(Class<T> clazz, Responses.JSON type) throws IOException {
+    public static <T> T fakeResponse(Responses.JSON type) throws IOException {
         InputStream is = Responses.JSON.load(type);
-        return jsonToPojo(clazz, readFullyAsString(is, "UTF-8"));
+        return jsonToPojo(Responses.JSON.targetClass(type), readFullyAsString(is, "UTF-8"));
     }
 }

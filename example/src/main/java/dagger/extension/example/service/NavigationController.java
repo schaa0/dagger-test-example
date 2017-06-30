@@ -38,7 +38,7 @@ public class NavigationController {
 
     public void toLocationSettings() {
         Intent viewIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-        activity.startActivity(viewIntent);
+        activity.startActivityForResult(viewIntent, 247);
     }
 
     public void toForecastActivity(String item) {

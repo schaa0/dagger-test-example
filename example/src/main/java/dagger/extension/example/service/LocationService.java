@@ -69,7 +69,7 @@ public class LocationService implements LocationListener
         locationManager.requestLocationUpdates(getBestProvider(), MIN_LOCATION_UPDATE_INTERVAL, MIN_DISTANCE_IN_METERS, this);
     }
 
-    private void removeUpdates()
+    public void removeUpdates()
     {
         if (!isActive) {
             return;
@@ -108,10 +108,7 @@ public class LocationService implements LocationListener
     }
 
     public void disposeIfNotObserved() {
-        if (!locationPublishSubject.hasObservers())
-        {
-            this.removeUpdates();
-        }
+        this.removeUpdates();
     }
 
     public Observable<Location> onNewLocation() {

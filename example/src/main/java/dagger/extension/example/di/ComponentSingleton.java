@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 
 import com.bumptech.glide.Glide;
@@ -15,6 +16,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.AllowStubGeneration;
+import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
@@ -39,20 +41,17 @@ import static dagger.extension.example.di.qualifier.RxScheduler.Type.NETWORK;
 @Component(modules = {ComponentSingleton.ModuleSingleton.class, AndroidSupportInjectionModule.class})
 @Singleton
 public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
+
     void inject(WeatherApplication application);
 
     @Component.Builder
     public abstract class Builder extends AndroidInjector.Builder<WeatherApplication> {
+        @BindsInstance @AllowStubGeneration public abstract Builder context(Context context);
         public abstract ComponentSingleton build();
     }
 
     @Module(includes = ActivityBindingsModule.class)
     abstract class ModuleSingleton {
-
-        @Provides
-        public static Context context(WeatherApplication application) {
-            return application;
-        }
 
         @Provides
         @Singleton
@@ -109,7 +108,7 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
             return Schedulers.from(AsyncTask.THREAD_POOL_EXECUTOR);
         }
 
-        @Provides @RxScheduler(MAIN) @Singleton
+        @Provides @RxScheduler(MAIN) @Singleton @AllowStubGeneration
         public static Scheduler mainScheduler() {
             return AndroidSchedulers.mainThread();
         }

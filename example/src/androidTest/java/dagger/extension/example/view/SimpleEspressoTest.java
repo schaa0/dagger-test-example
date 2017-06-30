@@ -1,13 +1,15 @@
 package dagger.extension.example.view;
 
-import android.content.Context;
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.location.Location;
-import android.location.LocationManager;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.ViewInteraction;
-import android.support.test.internal.runner.TestRequestBuilder;
+import android.support.test.internal.statement.UiThreadStatement;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 
@@ -18,7 +20,10 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
+import org.junit.runners.model.Statement;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -28,12 +33,9 @@ import java.util.concurrent.CountDownLatch;
 
 import dagger.android.testcase.DaggerActivityTestRule;
 import dagger.extension.example.R;
-import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
-import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
-import dagger.extension.example.model.today.TodayWeather;
+import dagger.extension.example.decoration.DefaultDecorations;
 import dagger.extension.example.service.LocationService;
 import dagger.extension.example.service.NavigationController;
-import dagger.extension.example.service.SearchService;
 import dagger.extension.example.service.WeatherApi;
 import dagger.extension.example.stub.SearchViewModelStubDelegate;
 import dagger.extension.example.stubs.DateProviderStub;
@@ -43,11 +45,7 @@ import dagger.extension.example.stubs.Responses;
 import dagger.extension.example.testcase.UiAutomatorEspressoTestCase;
 import dagger.extension.example.view.main.MainActivity;
 import dagger.extension.example.view.search.SearchAdapter;
-import dagger.extension.example.view.search.SearchAdapterFactory;
-import dagger.extension.example.view.search.SearchViewModel;
-import delegates.SearchViewModelDelegate;
 import io.reactivex.Observable;
-import io.reactivex.Scheduler;
 import io.reactivex.subjects.PublishSubject;
 import okhttp3.MediaType;
 import okhttp3.ResponseBody;
@@ -63,13 +61,16 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withParent;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static dagger.extension.example.decoration.DefaultDecorations.FAKE_LATITUDE;
+import static dagger.extension.example.decoration.DefaultDecorations.FAKE_LONGITUDE;
+import static dagger.extension.example.decoration.DefaultDecorations.defaultWeatherApiAnswers;
 import static dagger.extension.example.matcher.DrawableMatcher.hasNoDrawable;
 import static dagger.extension.example.matcher.EmptyTextMatcher.emptyText;
 import static dagger.extension.example.stubs.Fakes.fakeResponse;
-import static dagger.extension.example.stubs.Fakes.location;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.Matchers.allOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -78,43 +79,41 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(AndroidJUnit4.class)
 public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
 {
 
-    public static final double FAKE_LONGITUDE = 1.0;
-    public static final double FAKE_LATITUDE = 1.0;
-
     @Mock WeatherApi weatherApi;
     @Mock LocationService locationService;
 
     PublishSubject<Location> locationSubject = PublishSubject.create();
 
-    private MainActivity mActivity;
+    TestRule mockRule = new MockRule(this);
+    DaggerActivityTestRule<MainActivity> rule = new DaggerActivityTestRule<>(MainActivity.class);
+    TestRule decoratorRule = (base, description) -> {
+        new DefaultDecorations(decorate())
+                .apply(
+                        weatherApi, locationService,
+                        locationSubject, new DateProviderStub(2017, Calendar.JANUARY, 22, 23, 0, 0)
+                );
+        return base;
+    };
 
     @Rule
-    public DaggerActivityTestRule<MainActivity> rule = new DaggerActivityTestRule<>(MainActivity.class);
+    public TestRule ruleChain = RuleChain.outerRule(rule).around(decoratorRule).around(mockRule);
 
     @Override
     public void setUp() throws Exception
     {
         super.setUp();
-        TestButler.verifyAnimationsDisabled(InstrumentationRegistry.getTargetContext());
-        MockitoAnnotations.initMocks(this);
-        this.defaultWeatherApiAnswers();
-        Location fakeLocation = Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE);
-        doReturn(true).when(locationService).isGpsProviderEnabled();
-        doReturn(fakeLocation).when(locationService).lastLocation();
-        doReturn(locationSubject).when(locationService).onNewLocation();
-
-        decorate().componentSingleton()
-                  .withDateProvider(() -> new DateProviderStub(2017, Calendar.JANUARY, 22, 23, 0, 0))
-                  .withWeatherApi(() -> weatherApi)
-                  .withLocationService(() -> locationService);
-
+        if (isEmulator()) {
+            TestButler.verifyAnimationsDisabled(InstrumentationRegistry.getTargetContext());
+        }
     }
 
     @Test
@@ -125,10 +124,10 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         doReturn(Observable.empty()).when(weatherApi).getTomorrowWeather(anyDouble(), anyDouble());
 
         when(weatherApi.getForecastWeather(eq(FAKE_LONGITUDE), eq(FAKE_LATITUDE))).thenReturn(
-                Observable.just(fakeResponse(ThreeHoursForecastWeather.class, Responses.JSON.THREE_HOUR_FORECAST))
+                Observable.just(fakeResponse(Responses.JSON.THREE_HOUR_FORECAST))
         );
 
-        mActivity = rule.launchActivity(null);
+        rule.launchActivity(null);
         allowPermissionsIfNeeded();
 
         ViewInteraction appCompatTextView = onView(
@@ -161,7 +160,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public void itShouldRefreshTheViewWhenTheLocationChanged() throws IOException {
         rule.launchActivity(null);
         reset(weatherApi);
-        this.defaultWeatherApiAnswers();
+        defaultWeatherApiAnswers(weatherApi);
         locationSubject.onNext(Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE));
         verify(weatherApi).getCurrentWeather(FAKE_LONGITUDE, FAKE_LATITUDE);
         verify(weatherApi).getTomorrowWeather(FAKE_LONGITUDE, FAKE_LATITUDE);
@@ -171,25 +170,17 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     public void itShouldDisplayTemperatureFromApi() throws IOException
     {
 
-        mActivity = rule.launchActivity(null);
+        rule.launchActivity(null);
         allowPermissionsIfNeeded();
 
         onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText("Temperature: 3.76°C")));
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText("Temperature: 7.85°C")));
     }
 
-    private void defaultWeatherApiAnswers() throws IOException {
-        doReturn(Observable.just(fakeResponse(TomorrowWeather.class, Responses.JSON.TOMORROW_WEATHER)))
-                .when(weatherApi).getTomorrowWeather(anyDouble(), anyDouble());
-
-        doReturn(Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER)))
-                .when(weatherApi).getCurrentWeather(anyDouble(), anyDouble());
-    }
-
     @Test
     public void weatherDataIsRestoredOnOrientationChange() throws IOException, RemoteException {
 
-        mActivity = rule.launchActivity(null);
+        rule.launchActivity(null);
         allowPermissionsIfNeeded();
 
         String todayTemperature = "Temperature: 3.76°C";
@@ -199,13 +190,13 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
 
         device().setOrientationLeft();
-        SystemClock.sleep(500);
+        SystemClock.sleep(800);
 
         onView(withIndex(withId(R.id.temperatureTextView), 0)).check(matches(withText(todayTemperature)));
         onView(withIndex(withId(R.id.temperatureTextView), 1)).check(matches(withText(tomorrowTemperature)));
 
         reset(weatherApi);
-        this.defaultWeatherApiAnswers();
+        defaultWeatherApiAnswers(weatherApi);
 
         device().unfreezeRotation();
 
@@ -269,19 +260,16 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
                   .and().searchFragmentSubcomponent()
                     .withSearchViewModel(new SearchViewModelStubDelegate(latch));
 
-        mActivity = rule.launchActivity(null);
+        rule.launchActivity(null);
         this.allowPermissionsIfNeeded();
 
-        ViewInteraction viewPager = onView(
-                allOf(withId(R.id.container), isDisplayed()));
+        ViewInteraction viewPager = onView(allOf(withId(R.id.container), isDisplayed()));
         viewPager.perform(swipeLeft());
 
-        ViewInteraction appCompatTextView = onView(
-                allOf(withText("Search"), isDisplayed()));
+        ViewInteraction appCompatTextView = onView(allOf(withText("Search"), isDisplayed()));
         appCompatTextView.perform(click());
 
-        ViewInteraction actionMenuItemView = onView(
-                allOf(withId(R.id.action_search), isDisplayed()));
+        ViewInteraction actionMenuItemView = onView(allOf(withId(R.id.action_search), isDisplayed()));
         actionMenuItemView.perform(click());
 
         ViewInteraction searchAutoComplete = onView(
@@ -301,11 +289,31 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         final PublishSubject<SearchAdapter> adapterObservable = PublishSubject.create();
         decorate().searchFragmentSubcomponent().withRxObservableAdapter(() -> adapterObservable);
         rule.launchActivity(null);
-        ViewInteraction viewPager = onView(
-                allOf(withId(R.id.container), isDisplayed()));
+        ViewInteraction viewPager = onView(allOf(withId(R.id.container), isDisplayed()));
+        assertFalse(adapterObservable.hasObservers());
         viewPager.perform(swipeLeft());
         viewPager.perform(swipeLeft());
         assertTrue(adapterObservable.hasObservers());
+    }
+
+    @Test
+    public void requestsLocationUpdatesOnStart() {
+        rule.launchActivity(null);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        verify(locationService).requestLocationUpdates();
+    }
+
+    @Test
+    public void removesLocationUpdatesOnStop() throws Throwable {
+        final MainActivity activity = rule.launchActivity(null);
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        instrumentation.runOnMainSync(() -> {
+            instrumentation.callActivityOnPause(activity);
+            verify(locationService, times(0)).removeUpdates();
+            instrumentation.callActivityOnStop(activity);
+            verify(locationService).removeUpdates();
+        });
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
     }
 
     private static Matcher<View> withIndex(final Matcher<View> matcher, final int index) {

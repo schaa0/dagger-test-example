@@ -19,9 +19,7 @@ android {
             resources.srcDirs += sharedResources
         }
     }
-    testOptions {
-        unitTests.returnDefaultValues = true
-    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -62,7 +60,16 @@ dependencies {
     compile 'com.android.support:design:26.0.0-beta2'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
 
-    compile files('libs/dagger-fork.jar')
+    compile 'com.google.dagger:dagger:3.0'
+    compile 'com.google.dagger:dagger-android:3.0'
+    compile 'com.google.dagger:dagger-android-support:3.0'
+    annotationProcessor 'com.google.dagger:dagger-compiler:3.0'
+    annotationProcessor 'com.google.dagger:dagger-android-compiler:3.0'
+    testAnnotationProcessor 'com.google.dagger:dagger-decoder:3.0'
+    androidTestCompile 'com.google.dagger:dagger-android-testcase:3.0'
+    androidTestAnnotationProcessor 'com.google.dagger:dagger-decoder:3.0'
+
+/*    compile files('libs/dagger-fork.jar')
     compile files('libs/dagger-android-fork.jar')
     compile(name: 'dagger-android-support-fork', ext: 'aar')
     annotationProcessor 'com.google.guava:guava:20.0'
@@ -73,13 +80,13 @@ dependencies {
     testCompile(name: 'dagger-android-testcase-fork', ext: 'aar')
     androidTestCompile(name: 'dagger-android-testcase-fork', ext: 'aar')
     androidTestAnnotationProcessor files('libs/dagger-decoder-fork.jar')
-    testAnnotationProcessor files('libs/dagger-decoder-fork.jar')
+    testAnnotationProcessor files('libs/dagger-decoder-fork.jar')*/
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.robolectric:robolectric:3.3.2'
     testCompile 'org.robolectric:shadows-support-v4:3.3.2'
-    testCompile 'org.mockito:mockito-core:2.2.0'
-    androidTestCompile 'com.linkedin.dexmaker:dexmaker-mockito:2.2.0'
+    testCompile 'org.mockito:mockito-core:2.6.2'
+    androidTestCompile 'org.mockito:mockito-android:2.6.2'
     androidTestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
@@ -106,8 +113,10 @@ dependencies {
 
 afterEvaluate {
     android.buildTypes.all { variant ->
-        android.sourceSets.test.java.srcDirs += ("$buildDir/generated/source/apt/test/$variant.name")
-        android.sourceSets.androidTest.java.srcDirs += ("$buildDir/generated/source/apt/androidTest/$variant.name")
+        android.sourceSets.test.java.srcDirs += ("$buildDir/generated/source/apt/test/${variant.name}")
+        if (variant.name == "debug") {
+            android.sourceSets.androidTest.java.srcDirs += ("$buildDir/generated/source/apt/androidTest/${variant.name}")
+        }
     }
 }
 
@@ -121,16 +130,17 @@ afterEvaluate {
             def integrationTestGenerateClassesTask = tasks.findByName(integration)
             def g = "assemble${name}"
             def generateClassesTask = tasks.findByName(g)
-            if (generateClassesTask != null && unitTestGenerateClassesTask != null)
+            if (generateClassesTask != null && unitTestGenerateClassesTask != null) {
                 generateClassesTask.dependsOn unitTestGenerateClassesTask
                 generateClassesTask.dependsOn integrationTestGenerateClassesTask
+            }
         }
     }
 
 }
 
 android.applicationVariants.all { variant ->
-    System.out.println(variant.name)
+
     if (variant.name == "debug") {
         task "installTestButlerForDebugAndroidTest" {
 

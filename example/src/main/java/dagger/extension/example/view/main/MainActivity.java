@@ -1,43 +1,43 @@
 package dagger.extension.example.view.main;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import dagger.android.AndroidInjection;
 import dagger.android.support.DaggerAppCompatActivity;
 import dagger.extension.example.R;
 import dagger.extension.example.di.qualifier.RxObservable;
 import dagger.extension.example.di.qualifier.RxScheduler;
+import dagger.extension.example.service.LocationService;
+import dagger.extension.example.service.NavigationController;
 import dagger.extension.example.service.PermissionResult;
 import dagger.extension.example.service.PermissionService;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
-import io.reactivex.Observer;
 import io.reactivex.Scheduler;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.subjects.PublishSubject;
 
 import static dagger.extension.example.di.qualifier.RxObservable.Type.PAGE;
 import static dagger.extension.example.di.qualifier.RxObservable.Type.SEARCH;
 import static dagger.extension.example.di.qualifier.RxScheduler.Type.MAIN;
-import static dagger.extension.example.di.qualifier.RxScheduler.Type.NETWORK;
 
 public class MainActivity extends DaggerAppCompatActivity implements ViewPager.OnPageChangeListener {
 
+
+
+    public static final String SHOWS_GPS_SETTINGS = "SHOWS_GPS_SETTINGS";
     @BindView(R.id.container) ViewPager mViewPager;
     @BindView(R.id.tab_layout1) TabLayout tabLayout;
     @BindView(R.id.toolbar) Toolbar toolbar;
@@ -45,10 +45,13 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
     @Inject SectionsPagerAdapter mSectionsPagerAdapter;
     @Inject PermissionService permissionService;
 
-    @Inject @RxObservable(SEARCH) PublishSubject<String> publishSubject;
-    @Inject @RxObservable(PAGE) PublishSubject<Integer> publishPageChange;
+    @Inject @RxObservable(SEARCH) PublishSubject<String> searchSubject;
+    @Inject @RxObservable(PAGE) PublishSubject<Integer> pageChangeSubject;
 
     @Inject @RxScheduler(MAIN) Scheduler androidScheduler;
+    @Inject LocationService locationService;
+    @Inject NavigationController navigationController;
+    private boolean isShowingGpsSettings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -66,6 +69,39 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
         mViewPager.setAdapter(mSectionsPagerAdapter);
         tabLayout.setupWithViewPager(mViewPager, true);
 
+        if (savedInstanceState != null) {
+            isShowingGpsSettings = savedInstanceState.getBoolean(SHOWS_GPS_SETTINGS);
+        }
+
+        if (!isShowingGpsSettings && !locationService.isGpsProviderEnabled()) {
+            isShowingGpsSettings = true;
+            navigationController.toLocationSettings();
+        }
+
+    }
+
+    @Override
+    protected void onStart() {
+        locationService.requestLocationUpdates();
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        locationService.removeUpdates();
+        super.onStop();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        isShowingGpsSettings = false;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(SHOWS_GPS_SETTINGS, isShowingGpsSettings);
     }
 
     @Override
@@ -79,7 +115,7 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
             .observeOn(androidScheduler)
             .doOnNext(disposable -> mViewPager.setCurrentItem(SectionsPagerAdapter.POSITION_SEARCH, true))
             .doOnNext(s -> searchView.clearFocus())
-            .subscribeWith(publishSubject);
+            .subscribeWith(searchSubject);
         return true;
     }
 
@@ -132,7 +168,7 @@ public class MainActivity extends DaggerAppCompatActivity implements ViewPager.O
 
     @Override
     public void onPageSelected(int position) {
-        publishPageChange.onNext(position);
+        pageChangeSubject.onNext(position);
     }
 
     @Override

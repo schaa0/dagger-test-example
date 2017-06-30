@@ -48,4 +48,5 @@ public abstract class MainActivityModule extends ActivityModule<MainActivity> {
     public static String search(Context context) {
         return context.getString(R.string.search);
     }
+
 }

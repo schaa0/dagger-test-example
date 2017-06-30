@@ -4,6 +4,7 @@ import android.location.Location;
 
 import javax.inject.Inject;
 
+import dagger.AllowStubGeneration;
 import dagger.extension.example.di.qualifier.RxObservable;
 import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.service.LocationService;
@@ -20,7 +21,7 @@ import static dagger.extension.example.di.qualifier.RxScheduler.Type.MAIN;
 
 public class TodayWeatherViewModel extends WeatherViewModel {
 
-    @Inject
+    @Inject @AllowStubGeneration
     public TodayWeatherViewModel(NavigationController navigation,
                                  @RxObservable(PAGE) Observable<Integer> pageChangeObservable,
                                  PermissionService permissionService,
@@ -38,12 +39,12 @@ public class TodayWeatherViewModel extends WeatherViewModel {
                       .subscribe(weather ->
                       {
                           updateState(weather);
-                          dispatchRequestFinished();
                           disposables.add(weatherService.loadIcon(weather.icon()).subscribe(icon::set));
                       }, t -> {
                           this.showError(t);
                           this.clearView();
-                      }));
+                      }, this::dispatchRequestFinished)
+        );
     }
 
     @Override

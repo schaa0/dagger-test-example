@@ -20,14 +20,12 @@ public abstract class FragmentBindingsModule {
 
     @Module abstract static class TodayWeatherModule extends WeatherModule<TodayWeatherFragment> { }
 
-    @FragmentScope
-    @ContributesAndroidInjector(modules = {TodayWeatherModule.class})
+    @FragmentScope @ContributesAndroidInjector(modules = {TodayWeatherModule.class})
     public abstract TodayWeatherFragment todayWeatherFragment();
 
     @Module abstract static class TomorrowWeatherModule extends WeatherModule<TomorrowWeatherFragment> { }
 
-    @FragmentScope
-    @ContributesAndroidInjector(modules = {TomorrowWeatherModule.class})
+    @FragmentScope @ContributesAndroidInjector(modules = {TomorrowWeatherModule.class})
     public abstract TomorrowWeatherFragment tomorrowWeatherFragment();
 
     @Module

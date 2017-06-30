@@ -24,7 +24,6 @@ import dagger.extension.example.view.main.NavigationViewModel;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.internal.disposables.ListCompositeDisposable;
 import retrofit2.HttpException;
 
 public abstract class WeatherViewModel extends NavigationViewModel
@@ -74,20 +73,20 @@ public abstract class WeatherViewModel extends NavigationViewModel
                                      .filter(this::isOwnPosition)
                                      .subscribe(this::refreshIfNecessary));
 
-        if (!locationService.isGpsProviderEnabled()) {
-            navigate().toLocationSettings();
-        }
-
         if (this.isStatePresent()) {
             this.restoreState();
         }else {
-            requestPermissionsIfNeeded();
-            if (hasAllPermissions())
-            {
-                locationService.requestLocationUpdates();
-                loadWeatherIfAllPermissionsGranted();
+            if (!hasAllPermissions()) {
+                requestPermissionsIfNeeded();
+            }else if (isGpsEnabled()) {
+                loadWeatherAtLastKnownLocation();
             }
+
         }
+    }
+
+    private boolean isGpsEnabled() {
+        return locationService.isGpsProviderEnabled();
     }
 
     protected abstract boolean isOwnPosition(int position);
@@ -99,7 +98,7 @@ public abstract class WeatherViewModel extends NavigationViewModel
 
     private void refreshIfNecessary(int position) {
         if (this.weather.get() == null || this.weather.get() instanceof EmptyWeather) {
-            this.loadWeatherIfAllPermissionsGranted();
+            this.loadWeatherAtLastKnownLocation();
         }
     }
 
@@ -118,14 +117,10 @@ public abstract class WeatherViewModel extends NavigationViewModel
         locationService.disposeIfNotObserved();
     }
 
-    public void loadWeatherIfAllPermissionsGranted()
+    public void loadWeatherAtLastKnownLocation()
     {
-        locationService.requestLocationUpdates();
-        if (!requestPermissionsIfNeeded())
-        {
-            Location lastKnownLocation = this.locationService.lastLocation();
-            this.loadWeather(lastKnownLocation);
-        }
+        Location lastKnownLocation = this.locationService.lastLocation();
+        this.loadWeather(lastKnownLocation);
     }
 
     private void loadWeather(Location location)
@@ -219,7 +214,6 @@ public abstract class WeatherViewModel extends NavigationViewModel
 
     @Override
     public void showError(String title, String errorMessage) {
-        dispatchRequestFinished();
         super.showError(title, errorMessage);
     }
 
@@ -238,6 +232,18 @@ public abstract class WeatherViewModel extends NavigationViewModel
     protected void clearView() {
         this.weather.set(new EmptyWeather());
         this.icon.set(null);
+    }
+
+    public void onRefresh() {
+        if (stateContainsEmptyData() && !progressVisibility.get()) {
+            if (hasAllPermissions() && isGpsEnabled()) {
+                this.loadWeatherAtLastKnownLocation();
+            }
+        }
+    }
+
+    private boolean stateContainsEmptyData() {
+        return state.weather == null || state.weather instanceof EmptyWeather;
     }
 
     public static class WeatherViewModelState implements Parcelable {

@@ -3,7 +3,6 @@ package dagger.extension.example.view.weather;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.support.annotation.NonNull;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -15,10 +14,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 import java.text.ParseException;
 
-import dagger.extension.example.di.DaggerComponentSingleton;
-import dagger.extension.example.di.TestWeatherApplication;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
-import dagger.extension.example.model.today.TodayWeather;
 import dagger.extension.example.scheduler.CurrentThreadExecutor;
 import dagger.extension.example.service.LocationService;
 import dagger.extension.example.service.NavigationController;
@@ -33,6 +29,7 @@ import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
 import static dagger.extension.example.stubs.Fakes.fakeResponse;
+import static dagger.extension.example.stubs.Fakes.location;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -123,7 +120,7 @@ public class TestTodayWeatherViewModel
         when(pm.isPermissionGranted(PERM_FINE_LOCATION)).thenReturn(true);
         Location location = mockLocation(mock(Location.class), 1.0, 1.0);
         when(weatherService.getCurrentWeather(1.0, 1.0))
-                .thenReturn(Observable.just(fakeResponse(TodayWeather.class, Responses.JSON.TODAY_WEATHER)));
+                .thenReturn(Observable.just(fakeResponse(Responses.JSON.TODAY_WEATHER)));
         when(locationService.lastLocation()).thenReturn(location);
         vm.onViewAttached();
         verify(pm, atLeastOnce()).isPermissionGranted(anyString());
@@ -147,7 +144,7 @@ public class TestTodayWeatherViewModel
         String expectedResult = Responses.createExpectedFilteredResult();
         when(weatherParser.parse(any(ThreeHoursForecastWeather.class))).thenReturn(expectedResult);
         when(weatherService.getForecastWeather(longitude, latitude))
-                .thenReturn(Observable.just(fakeResponse(ThreeHoursForecastWeather.class, Responses.JSON.THREE_HOUR_FORECAST)));
+                .thenReturn(Observable.just(fakeResponse(Responses.JSON.THREE_HOUR_FORECAST)));
         vm.loadForecastWeatherDataForToday();
         verify(navigation).toForecastActivity(expectedResult);
     }
@@ -163,7 +160,7 @@ public class TestTodayWeatherViewModel
     }
 
     @Test
-    public void grantingPermissionsShouldTriggerReloadOfWeatherData() {
+    public void grantingPermissionsShouldTriggerReloadOfWeatherDataIfGpsIsEnabled() {
         final Location location = mockLocation(mock(Location.class), 1.0, 1.0);
         when(locationService.lastLocation()).thenReturn(location);
         when(pm.isPermissionGranted(PERM_COARSE_LOCATION)).thenReturn(false);
@@ -213,10 +210,10 @@ public class TestTodayWeatherViewModel
     }
 
     @Test
-    public void opensLocationSettingsIfGpsIsNotEnabled() {
+    public void loadsDataWhenGpsGotActivated() {
         doReturn(false).when(locationService).isGpsProviderEnabled();
         vm.onViewAttached();
-        verify(navigation).toLocationSettings();
+        reset(locationService);
     }
 
     private static Location mockLocation(Location location, double lng, double lat) {

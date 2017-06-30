@@ -4,6 +4,13 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
+import com.google.auto.factory.AutoFactory;
+
+import javax.inject.Inject;
+
+import dagger.extension.example.di.scope.ActivityScope;
+
+@AutoFactory
 public class EmptyWeather implements Weather {
 
     public EmptyWeather() { }

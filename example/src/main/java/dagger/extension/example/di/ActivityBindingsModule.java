@@ -1,5 +1,6 @@
 package dagger.extension.example.di;
 
+import dagger.AllowStubGeneration;
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
 import dagger.extension.example.di.scope.ActivityScope;

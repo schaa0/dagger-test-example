@@ -8,12 +8,12 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import dagger.AllowStubGeneration;
 import dagger.extension.example.di.scope.ActivityScope;
 import dagger.extension.example.view.search.SearchFragment;
 import dagger.extension.example.view.weather.TodayWeatherFragment;
 import dagger.extension.example.view.weather.TomorrowWeatherFragment;
 
-@ActivityScope
 public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
     public static final int POSITION_TODAY = 0;
@@ -22,9 +22,9 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
     private static final int PAGE_COUNT = 3;
 
-    public final Map<Integer, String> pageTitles;
+    private final Map<Integer, String> pageTitles;
 
-    @Inject
+    @Inject @AllowStubGeneration
     public SectionsPagerAdapter(FragmentManager fm, Map<Integer, String> pageTitles) {
         super(fm);
         this.pageTitles = pageTitles;
