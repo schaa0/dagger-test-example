@@ -1,16 +1,18 @@
 package dagger.extension.example.view;
 
-import android.app.Activity;
 import android.app.Instrumentation;
 import android.location.Location;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.ViewInteraction;
-import android.support.test.internal.statement.UiThreadStatement;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiSelector;
+import android.util.Log;
 import android.view.View;
 
 import com.linkedin.android.testbutler.TestButler;
@@ -18,12 +20,12 @@ import com.linkedin.android.testbutler.TestButler;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
-import org.junit.runners.model.Statement;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -31,9 +33,17 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.concurrent.CountDownLatch;
 
+import dagger.Replaceable;
+import dagger.android.testcase.Apply;
 import dagger.android.testcase.DaggerActivityTestRule;
+import dagger.android.testcase.Replace;
+import dagger.annotation.InComponentSingleton;
 import dagger.extension.example.R;
-import dagger.extension.example.decoration.DefaultDecorations;
+import dagger.extension.example.di.ComponentSingleton;
+import dagger.extension.example.di.GraphDecorator;
+import dagger.extension.example.di.TestWeatherApplication;
+import dagger.extension.example.di.qualifier.RxObservable;
+import dagger.extension.example.service.DateProvider;
 import dagger.extension.example.service.LocationService;
 import dagger.extension.example.service.NavigationController;
 import dagger.extension.example.service.WeatherApi;
@@ -81,39 +91,40 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(AndroidJUnit4.class)
-public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
+public class SimpleEspressoTest
 {
 
-    @Mock WeatherApi weatherApi;
-    @Mock LocationService locationService;
+    @Mock @InComponentSingleton WeatherApi weatherApi;
+    @Mock @InComponentSingleton LocationService locationService;
+
+    @Replace @InComponentSingleton
+    DateProvider dateProviderStub = new DateProviderStub(2017, Calendar.JANUARY, 22, 23, 0, 0);
 
     PublishSubject<Location> locationSubject = PublishSubject.create();
 
-    TestRule mockRule = new MockRule(this);
-    DaggerActivityTestRule<MainActivity> rule = new DaggerActivityTestRule<>(MainActivity.class);
-    TestRule decoratorRule = (base, description) -> {
-        new DefaultDecorations(decorate())
-                .apply(
-                        weatherApi, locationService,
-                        locationSubject, new DateProviderStub(2017, Calendar.JANUARY, 22, 23, 0, 0)
-                );
-        return base;
-    };
+    @Rule public DaggerActivityTestRule<MainActivity> rule =
+                                            new DaggerActivityTestRule<>(MainActivity.class);
 
-    @Rule
-    public TestRule ruleChain = RuleChain.outerRule(rule).around(decoratorRule).around(mockRule);
+    TestWeatherApplication app() {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        return (TestWeatherApplication) instrumentation.getTargetContext().getApplicationContext();
+    }
 
-    @Override
+    @Before
     public void setUp() throws Exception
     {
-        super.setUp();
-        if (isEmulator()) {
-            TestButler.verifyAnimationsDisabled(InstrumentationRegistry.getTargetContext());
-        }
+        MockitoAnnotations.initMocks(this);
+        Apply.decorationsOf(this, app());
+
+        defaultWeatherApiAnswers(weatherApi);
+
+        Location fakeLocation = Fakes.location(FAKE_LONGITUDE, FAKE_LATITUDE);
+        doReturn(true).when(locationService).isGpsProviderEnabled();
+        doReturn(fakeLocation).when(locationService).lastLocation();
+        doReturn(locationSubject).when(locationService).onNewLocation();
     }
 
     @Test
@@ -209,6 +220,10 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
 
     }
 
+    private UiDevice device() {
+        return UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+    }
+
     @Test
     public void errorDialogIsShownWhenRequestFails() {
         final String message = "some exception message";
@@ -229,7 +244,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     @Test
     public void viewIsClearedWhenARequestFailed() {
         NavigationController controller = mock(NavigationController.class);
-        decorate().mainActivitySubcomponent().withNavigationController(() -> controller);
+        app().mainActivitySubcomponent().withNavigationController(() -> controller);
         doNothing().when(controller).showErrorIfNotAlreadyShowing(anyString(), anyString());
         final String message = "some exception message";
         when(weatherApi.getCurrentWeather(FAKE_LONGITUDE, FAKE_LATITUDE)).thenReturn(
@@ -255,7 +270,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     @Test
     public void testSearchIsInvokedWhenSubmittingInSearchView() {
         CountDownLatch latch = new CountDownLatch(1);
-        decorate().mainActivitySubcomponent()
+        app().mainActivitySubcomponent()
                     .withPermissionService(activity -> new PermissionServiceStub(activity, false))
                   .and().searchFragmentSubcomponent()
                     .withSearchViewModel(new SearchViewModelStubDelegate(latch));
@@ -287,7 +302,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
     @Test
     public void searchFragmentSubscribesToAdapterObservable() throws IOException {
         final PublishSubject<SearchAdapter> adapterObservable = PublishSubject.create();
-        decorate().searchFragmentSubcomponent().withRxObservableAdapter(() -> adapterObservable);
+        app().searchFragmentSubcomponent().withRxObservableAdapter(() -> adapterObservable);
         rule.launchActivity(null);
         ViewInteraction viewPager = onView(allOf(withId(R.id.container), isDisplayed()));
         assertFalse(adapterObservable.hasObservers());
@@ -313,7 +328,7 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
             instrumentation.callActivityOnStop(activity);
             verify(locationService).removeUpdates();
         });
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        instrumentation.waitForIdleSync();
     }
 
     private static Matcher<View> withIndex(final Matcher<View> matcher, final int index) {
@@ -334,4 +349,18 @@ public class SimpleEspressoTest extends UiAutomatorEspressoTestCase
         };
     }
 
+    protected void allowPermissionsIfNeeded()  {
+        if (Build.VERSION.SDK_INT >= 23) {
+            UiObject allowPermissions = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).findObject(
+                    new UiSelector().className("android.widget.Button")
+                                    .resourceId("com.android.packageinstaller:id/permission_allow_button"));
+            if (allowPermissions.exists()) {
+                try {
+                    allowPermissions.click();
+                } catch (UiObjectNotFoundException e) {
+                    Log.e(this.getClass().getName(), "There is no permissions dialog to interact with ", e);
+                }
+            }
+        }
+    }
 }

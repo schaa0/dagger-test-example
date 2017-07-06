@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
@@ -25,7 +26,7 @@ public class LocationService implements LocationListener
 
     private boolean isActive = false;
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public LocationService(LocationManager locationManager)
     {
         this.locationManager = locationManager;

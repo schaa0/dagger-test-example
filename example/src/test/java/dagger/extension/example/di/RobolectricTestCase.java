@@ -7,15 +7,21 @@ import org.robolectric.RuntimeEnvironment;
 public class RobolectricTestCase {
 
     private GraphDecorator decorator;
+    private TestApplicationForRobolectric app;
 
     public GraphDecorator decorate() {
         return decorator;
     }
 
+    public TestApplicationForRobolectric app() {
+        return this.app;
+    }
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        decorator = ((TestApplicationForRobolectric) RuntimeEnvironment.application).decorator();
+        app = (TestApplicationForRobolectric) RuntimeEnvironment.application;
+        decorator = app.decorator();
     }
 
 }

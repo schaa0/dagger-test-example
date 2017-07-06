@@ -20,6 +20,7 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import dagger.Replaceable;
 import dagger.android.AndroidInjector;
 import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.extension.example.R;
@@ -45,8 +46,8 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
     void inject(WeatherApplication application);
 
     @Component.Builder
-    public abstract class Builder extends AndroidInjector.Builder<WeatherApplication> {
-        @BindsInstance @AllowStubGeneration public abstract Builder context(Context context);
+    abstract class Builder extends AndroidInjector.Builder<WeatherApplication> {
+        @BindsInstance public abstract Builder context(Context context);
         public abstract ComponentSingleton build();
     }
 
@@ -64,27 +65,27 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
             return PreferenceManager.getDefaultSharedPreferences(context);
         }
 
-        @Provides @ApiParam("key") @AllowStubGeneration
+        @Provides @ApiParam("key") @Replaceable
         public static String apiKey(Context context) {
             return context.getString(R.string.api_key);
         }
 
-        @Provides @ApiParam("lang") @AllowStubGeneration
+        @Provides @ApiParam("lang") @Replaceable
         public static String lang() {
             return "en";
         }
 
-        @Provides @ApiParam("units") @AllowStubGeneration
+        @Provides @ApiParam("units") @Replaceable
         public static String units() {
             return "metric";
         }
 
-        @Provides @Named("endpointUrl") @AllowStubGeneration
+        @Provides @Named("endpointUrl") @Replaceable
         public static String endpointUrl(Context context) {
             return context.getString(R.string.weather_endpoint_url);
         }
 
-        @Provides @AllowStubGeneration
+        @Provides @Replaceable
         public static RetrofitWeatherApi weatherAPI(@Named("endpointUrl") String url) {
             return new Retrofit.Builder()
                     .addConverterFactory(GsonConverterFactory.create())
@@ -98,7 +99,7 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
                     .create(RetrofitWeatherApi.class);
         }
 
-        @Provides @Singleton @AllowStubGeneration
+        @Provides @Singleton @Replaceable
         public static RequestManager glide(Context context) {
             return Glide.with(context);
         }
@@ -108,7 +109,7 @@ public interface ComponentSingleton extends AndroidInjector<WeatherApplication>{
             return Schedulers.from(AsyncTask.THREAD_POOL_EXECUTOR);
         }
 
-        @Provides @RxScheduler(MAIN) @Singleton @AllowStubGeneration
+        @Provides @RxScheduler(MAIN) @Singleton @Replaceable
         public static Scheduler mainScheduler() {
             return AndroidSchedulers.mainThread();
         }

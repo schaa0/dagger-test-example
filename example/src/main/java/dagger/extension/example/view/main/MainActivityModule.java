@@ -6,6 +6,7 @@ import dagger.AllowStubGeneration;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.Replaceable;
 import dagger.extension.example.R;
 import dagger.extension.example.di.ActivityModule;
 import dagger.extension.example.di.FragmentBindingsModule;
@@ -14,6 +15,7 @@ import dagger.extension.example.di.scope.ActivityScope;
 import dagger.multibindings.IntKey;
 import dagger.multibindings.IntoMap;
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.subjects.PublishSubject;
 
 import static dagger.extension.example.di.qualifier.RxObservable.Type.*;
@@ -22,10 +24,10 @@ import static dagger.extension.example.view.main.SectionsPagerAdapter.*;
 @Module(includes = {FragmentBindingsModule.class})
 public abstract class MainActivityModule extends ActivityModule<MainActivity> {
 
-    @ActivityScope @Provides @RxObservable(SEARCH) @AllowStubGeneration
+    @ActivityScope @Provides @RxObservable(SEARCH) @Replaceable
     public static PublishSubject<String> searchQuerySubject() { return PublishSubject.create(); }
 
-    @ActivityScope @Provides @RxObservable(PAGE) @AllowStubGeneration
+    @ActivityScope @Provides @RxObservable(PAGE) @Replaceable
     public static PublishSubject<Integer> pageChangedSubject() { return PublishSubject.create(); }
 
     @Binds @RxObservable(SEARCH)
@@ -39,7 +41,7 @@ public abstract class MainActivityModule extends ActivityModule<MainActivity> {
         return context.getString(R.string.today);
     }
 
-    @Provides @IntKey(POSITION_TOMORROW) @IntoMap @AllowStubGeneration
+    @Provides @IntKey(POSITION_TOMORROW) @IntoMap @Replaceable
     public static String tomorrow(Context context) {
         return context.getString(R.string.tomorrow);
     }

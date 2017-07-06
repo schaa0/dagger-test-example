@@ -5,6 +5,7 @@ import android.location.Location;
 import javax.inject.Inject;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 import dagger.extension.example.di.qualifier.RxObservable;
 import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.model.Weather;
@@ -23,7 +24,7 @@ import static dagger.extension.example.di.qualifier.RxScheduler.Type.NETWORK;
 
 public class TomorrowWeatherViewModel extends WeatherViewModel {
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public TomorrowWeatherViewModel(NavigationController navigation,
                                     @RxObservable(PAGE) Observable<Integer> pageChangeObservable,
                                     PermissionService permissionService,

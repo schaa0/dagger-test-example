@@ -6,9 +6,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 import dagger.extension.example.di.qualifier.RxObservable;
 import dagger.extension.example.di.qualifier.RxScheduler;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
+import dagger.extension.example.model.forecast.threehours.WeatherInfo;
 import dagger.extension.example.service.NavigationController;
 import dagger.extension.example.service.SearchService;
 import dagger.extension.example.view.main.NavigationViewModel;
@@ -32,7 +34,7 @@ public class SearchViewModel extends NavigationViewModel {
 
     private SearchAdapter adapter;
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public SearchViewModel(NavigationController navigationController,
                            @RxObservable("search") Observable<String> searchObservable,
                            @RxObservable("adapter") PublishSubject<SearchAdapter> searchAdapterSubject,
@@ -64,7 +66,7 @@ public class SearchViewModel extends NavigationViewModel {
             .doOnNext(searchModel -> SearchViewModel.this.city.set(searchModel.getCity().getName()))
             .map(ThreeHoursForecastWeather::getWeatherInfo)
             .flatMap(Observable::fromIterable)
-            .map(weatherInfo -> new SearchItemViewModel(weatherInfo.getDtTxt(), weatherInfo.temperature(), weatherInfo.humidity()))
+            .map(this::toSearchItemViewModel)
             .toList()
             .observeOn(androidScheduler)
             .subscribe((searchItemViewModels) -> {
@@ -78,12 +80,19 @@ public class SearchViewModel extends NavigationViewModel {
             }, this::onError));
     }
 
+    private SearchItemViewModel toSearchItemViewModel(WeatherInfo weatherInfo) {
+        final String dtTxt = weatherInfo.getDtTxt();
+        final String temperature = weatherInfo.temperature();
+        final String humidity = weatherInfo.humidity();
+        return new SearchItemViewModel(dtTxt, temperature, humidity);
+    }
+
     private void onError(Throwable throwable) {
         this.showError(throwable.getMessage(), throwable.toString());
     }
 
     public void onDetach() {
-        compositeDisposable.clear();
+        compositeDisposable.dispose();
     }
 
 }

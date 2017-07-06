@@ -6,10 +6,13 @@ import com.bumptech.glide.RequestManager;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import dagger.extension.example.di.ComponentSingleton;
 import dagger.extension.example.di.TestDaggerComponentSingleton;
 import dagger.extension.example.di.TestWeatherApplication;
+import dagger.extension.example.di.qualifier.ApiParam;
 import dagger.extension.example.scheduler.CurrentThreadExecutor;
 import dagger.extension.example.service.DateProvider;
 import dagger.extension.example.service.WeatherApi;
@@ -26,11 +29,23 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class TestGraphComposition {
 
+    @Mock RequestManager requestManager;
+    @ApiParam("key") String apiKey;
 
     @Test
     public void testComponent() {
 
         final TestWeatherApplication app = new TestWeatherApplication();
+
+        if (true) {
+            final TestDaggerComponentSingleton component = (TestDaggerComponentSingleton)
+                    TestDaggerComponentSingleton.builder(app).context(app).create(app);
+            final RequestManager requestManager = component.getRequestManager().get();
+            final String apiKey = component.getApiParamKey().get();
+            assertEquals(this.requestManager, requestManager);
+            assertEquals(this.apiKey, apiKey);
+            return;
+        }
 
         app.componentSingleton()
            .withRequestManager(() -> mock(RequestManager.class))

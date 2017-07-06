@@ -18,8 +18,9 @@ import io.reactivex.disposables.CompositeDisposable;
 public class SearchFragment extends DaggerFragment {
     
     @Inject SearchViewModel searchViewModel;
+    @Inject CompositeDisposable compositeDisposable;
+
     private LayoutSearchBinding binding;
-    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Nullable
     @Override
@@ -33,7 +34,9 @@ public class SearchFragment extends DaggerFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         binding.setVm(searchViewModel);
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
+        binding.recyclerView.setLayoutManager(
+                new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false)
+        );
         compositeDisposable.add(
             searchViewModel.onNewAdapterAvailable().subscribe(searchAdapter -> {
                 binding.recyclerView.setAdapter(searchAdapter);
@@ -45,7 +48,7 @@ public class SearchFragment extends DaggerFragment {
     @Override
     public void onDestroy() {
         searchViewModel.onDetach();
-        compositeDisposable.clear();
+        compositeDisposable.dispose();
         binding.unbind();
         super.onDestroy();
     }

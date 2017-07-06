@@ -3,6 +3,7 @@ package dagger.extension.example.service;
 import javax.inject.Inject;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 import dagger.extension.example.di.qualifier.ApiParam;
 import dagger.extension.example.model.forecast.threehours.ThreeHoursForecastWeather;
 import dagger.extension.example.model.forecast.tomorrow.TomorrowWeather;
@@ -17,7 +18,7 @@ public class WeatherApi {
     private final String metric;
     private final String apiKey;
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public WeatherApi(RetrofitWeatherApi api,
                       @ApiParam("lang") String lang,
                       @ApiParam("units") String metric,

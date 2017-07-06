@@ -10,10 +10,11 @@ import java.util.TimeZone;
 import javax.inject.Inject;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 
 public class DateProvider {
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public DateProvider() { }
 
     public Calendar getCurrentDate(){

@@ -4,10 +4,12 @@ import android.content.Intent;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
+import dagger.AllowStubGeneration;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.extension.example.model.EmptyWeatherFactory;
+import io.reactivex.disposables.CompositeDisposable;
 
 @Module
 public abstract class ActivityModule<T extends AppCompatActivity> {

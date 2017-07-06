@@ -8,7 +8,7 @@ import javax.inject.Inject;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
 
-public class WeatherApplication extends DaggerHookApplication implements HasActivityInjector{
+public class WeatherApplication extends DecoratorApplication implements HasActivityInjector{
 
     @Inject DispatchingAndroidInjector<Activity> activityInjector;
 

@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import javax.inject.Inject;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 import dagger.extension.example.di.scope.ActivityScope;
 import dagger.extension.example.view.error.ComponentErrorDialogFragment;
 import dagger.extension.example.view.forecast.ForecastActivity;
@@ -18,7 +19,7 @@ public class NavigationController {
     private final FragmentManager fm;
     private final ComponentErrorDialogFragment.Builder errorBuilder;
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public NavigationController(AppCompatActivity activity, FragmentManager fm, ComponentErrorDialogFragment.Builder errorBuilder) {
         this.activity = activity;
         this.fm = fm;

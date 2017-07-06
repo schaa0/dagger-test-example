@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 
@@ -19,7 +20,7 @@ public class ImageRequestManager {
 
     private RequestManager requestManager;
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public ImageRequestManager(RequestManager requestManager){
         this.requestManager = requestManager;
     }

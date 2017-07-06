@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 import dagger.extension.example.di.scope.ActivityScope;
 import dagger.extension.example.view.search.SearchFragment;
 import dagger.extension.example.view.weather.TodayWeatherFragment;
@@ -24,7 +25,7 @@ public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
     private final Map<Integer, String> pageTitles;
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public SectionsPagerAdapter(FragmentManager fm, Map<Integer, String> pageTitles) {
         super(fm);
         this.pageTitles = pageTitles;

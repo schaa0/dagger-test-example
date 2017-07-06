@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import javax.inject.Inject;
 
 import dagger.AllowStubGeneration;
+import dagger.Replaceable;
 import dagger.extension.example.di.scope.ActivityScope;
 import io.reactivex.subjects.PublishSubject;
 
@@ -16,7 +17,7 @@ public class PermissionService {
     private final AppCompatActivity activity;
     private final PublishSubject<PermissionResult> container = PublishSubject.create();
 
-    @Inject @AllowStubGeneration
+    @Inject @Replaceable
     public PermissionService(AppCompatActivity activity) {
         this.activity = activity;
     }

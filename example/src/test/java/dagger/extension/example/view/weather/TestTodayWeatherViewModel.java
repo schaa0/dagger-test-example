@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("MissingPermission")
 //@Config(sdk = 21, constants = BuildConfig.class, application = TestWeatherApplication.class)
 @RunWith(MockitoJUnitRunner.class)
-public class TestTodayWeatherViewModel
+public class TestTodayWeatherViewModel implements WeatherViewModelTest
 {
 
     private static final int RC_PERM_FINE_LOCATION = TodayWeatherViewModel.REQUEST_CODE_PERM_ACCESS_FINE_LOCATION;
